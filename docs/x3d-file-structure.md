@@ -84,26 +84,20 @@
       "-children": [
         {
           "Shape": {
-            "-appearance": [
-              {
-                "Appearance": {
-                  "-material": [
-                    {
-                      "Material": {
-                        "@diffuseColor": [1.0, 0.0, 0.0]
-                      }
-                    }
-                  ]
+            "-appearance": {
+              "Appearance": {
+                "-material": {
+                  "Material": {
+                    "@diffuseColor": [1.0, 0.0, 0.0]
+                  }
                 }
               }
-            ],
-            "-geometry": [
-              {
-                "Sphere": {
-                  "@radius": 1.0
-                }
+            },
+            "-geometry": {
+              "Sphere": {
+                "@radius": 1.0
               }
-            ]
+            }
           }
         }
       ]
@@ -168,6 +162,7 @@ Shape {
 **X3D 4.0:**
 - DTD: `http://www.web3d.org/specifications/x3d-4.0.dtd`
 - XSD: `http://www.web3d.org/specifications/x3d-4.0.xsd`
+- JSON Schema: `https://www.web3d.org/specifications/x3d-4.0-JSONSchema.json`
 - Schematron: `https://www.web3d.org/x3d/tools/schematron/X3dSchematronValidityChecks.sch`
 
 **X3D 3.3:**

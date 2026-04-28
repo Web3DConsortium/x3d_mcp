@@ -1,21 +1,25 @@
 """X3D validation pipeline.
 
-Validates X3D content against the X3D 4.1 XSD schema using lxml.
-Supports XML, JSON, and basic structural checks.
+Validates X3D content against the X3D 4.1 XSD schema using lxml,
+and X3D JSON content against the Web3D Consortium X3D 4.0 JSON Schema
+using jsonschema (Draft 2020-12).
 """
 
 import json
 from pathlib import Path
 from lxml import etree
+from jsonschema import Draft202012Validator
 
 
 SCHEMAS_DIR = Path(__file__).resolve().parent / "schemas"
 XSD_PATH = SCHEMAS_DIR / "x3d-4.1.xsd"
+JSON_SCHEMA_PATH = SCHEMAS_DIR / "x3d-4.0-JSONSchema.json"
 
 # XSI namespace attribute that x3d.py adds -- must be stripped before validation
 XSI_NS = "https://www.w3.org/2001/XMLSchema-instance"
 
 _schema = None
+_json_validator: Draft202012Validator | None = None
 
 
 def _get_schema() -> etree.XMLSchema:
@@ -76,28 +80,38 @@ def validate_scene(scene_manager) -> dict:
     return validate_xml(xml_string)
 
 
+def _get_json_validator() -> Draft202012Validator:
+    """Load and cache the X3D 4.0 JSON Schema validator."""
+    global _json_validator
+    if _json_validator is not None:
+        return _json_validator
+    with JSON_SCHEMA_PATH.open() as f:
+        schema = json.load(f)
+    _json_validator = Draft202012Validator(schema)
+    return _json_validator
+
+
+def _format_json_path(path) -> str:
+    """Format a jsonschema absolute_path deque as 'X3D/head/meta/0' or '(root)'."""
+    parts = [str(p) for p in path]
+    return "/".join(parts) if parts else "(root)"
+
+
 def validate_json(json_string: str) -> dict:
-    """Basic structural validation of X3D JSON content.
+    """Validate X3D JSON content against the Web3D X3D 4.0 JSON Schema.
 
-    Returns {"valid": bool, "errors": list[str]}.
+    Catches misspelled keys (head/meta/etc.), unknown nodes inside Scene,
+    missing required fields, and wrong-type values via Draft 2020-12
+    schema validation. Returns {"valid": bool, "errors": list[str]}.
     """
-    errors = []
-
     try:
         data = json.loads(json_string)
     except json.JSONDecodeError as e:
         return {"valid": False, "errors": [f"JSON parse error: {e}"]}
 
-    if "X3D" not in data:
-        errors.append("Missing root 'X3D' object")
-        return {"valid": False, "errors": errors}
-
-    x3d = data["X3D"]
-    if "@version" not in x3d:
-        errors.append("Missing '@version' in X3D object")
-    if "@profile" not in x3d:
-        errors.append("Missing '@profile' in X3D object")
-    if "Scene" not in x3d:
-        errors.append("Missing 'Scene' in X3D object")
-
+    validator = _get_json_validator()
+    errors = [
+        f"{_format_json_path(err.absolute_path)}: {err.message}"
+        for err in validator.iter_errors(data)
+    ]
     return {"valid": len(errors) == 0, "errors": errors}

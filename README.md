@@ -37,7 +37,7 @@ Three layers, matching the X3D specification's own validation hierarchy:
 
 1. **Type checking at generation time** -- `x3d.py` enforces field types, ranges, and enumerations during scene construction
 2. **XSD validation** -- `lxml.etree.XMLSchema` against `x3d-4.1.xsd` (bundled with companion schemas)
-3. **JSON structural validation** -- checks for required X3D root, @version, @profile, and Scene keys
+3. **JSON Schema validation** -- `jsonschema.Draft202012Validator` against `x3d-4.0-JSONSchema.json` (Web3D Consortium, 364 `$defs`). Catches misspelled keys (`head`/`meta`/etc.), unknown node names inside `Scene`, missing required fields (`encoding`, `@version`, `@profile`, `Scene`), and wrong-type values. Web3D has not yet published a 4.1 JSON Schema, so the 4.0 schema is bundled in the meantime.
 
 ### X3DUOM as Foundation
 
