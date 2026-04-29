@@ -63,6 +63,7 @@
 | X_ITE Online Converter | https://create3000.github.io/x_ite/laboratory/x3d-file-converter/ | X3D, VRML, glTF, OBJ, STL, PLY, SVG |
 | X3D→JSON XSLT | https://www.web3d.org/x3d/stylesheets/X3dToJson.html | XML↔JSON conversion |
 | NIST VRML→X3D | https://ovrt.nist.gov/v2_x3d.html | VRML97 to X3D |
+| Okino USD Exporter | https://www.okino.com/conv/exp_usd.htm | X3D/VRML→USD (USDA, USDC, USDZ) reference: scene-graph hierarchy, UsdPreviewSurface materials, IndexedFaceSet→USD mesh, animation, instancing |
 
 ## Libraries & APIs
 
