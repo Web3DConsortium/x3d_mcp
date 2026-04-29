@@ -33,11 +33,12 @@ JSON and ClassicVRML encoding uses `x3d.py`'s built-in `.JSON()` and `.VRML()` s
 
 ### Validation Pipeline
 
-Three layers, matching the X3D specification's own validation hierarchy:
+Four layers, matching the X3D specification's own validation hierarchy:
 
 1. **Type checking at generation time** -- `x3d.py` enforces field types, ranges, and enumerations during scene construction
 2. **XSD validation** -- `lxml.etree.XMLSchema` against `x3d-4.1.xsd` (bundled with companion schemas)
 3. **JSON Schema validation** -- `jsonschema.Draft202012Validator` against `x3d-4.0-JSONSchema.json` (Web3D Consortium, 364 `$defs`). Catches misspelled keys (`head`/`meta`/etc.), unknown node names inside `Scene`, missing required fields (`encoding`, `@version`, `@profile`, `Scene`), and wrong-type values. Web3D has not yet published a 4.1 JSON Schema, so the 4.0 schema is bundled in the meantime.
+4. **Semantic checks** -- imperative Python checks for authoring-level bugs XSD cannot express: missing geometry/appearance on Shapes, empty grouping nodes, duplicate DEFs, USE/DEF consistency, ROUTE field/access-type/type validity, missing Viewpoints. Adapted from [niknarra/x3d-mcp](https://github.com/niknarra/x3d-mcp) (Nikhil Narra, Nicholas Polys -- Virginia Tech / Web3D Consortium).
 
 ### X3DUOM as Foundation
 
@@ -66,6 +67,7 @@ x3d_mcp/
       x3duom.py            # X3DUOM parser, node/field metadata
     validation/
       validate.py          # XSD + JSON validation pipeline
+      semantic.py          # Layer 4 semantic checks (DEF/USE, ROUTE validity, etc.)
       schemas/             # Bundled x3d-4.1.xsd, x3d-4.1.dtd, X3DUOM 4.1
   dataset/
     schema.py              # Canonical training example schema, normalization
@@ -116,6 +118,7 @@ x3d_mcp/
 |------|-------------|
 | `validate_x3d` | Validate an X3D document (XML or JSON) against the XSD schema. Returns pass/fail with detailed error messages. |
 | `validate_current_scene` | Validate the current granular scene against the XSD schema. |
+| `validate_semantic` | Run semantic checks on X3D XML beyond XSD: missing geometry/appearance on Shapes, empty grouping nodes, duplicate DEFs, USE/DEF consistency, ROUTE field/access-type/type-match validity, missing Viewpoints. Returns a markdown report. |
 
 ### Conversion Tools
 

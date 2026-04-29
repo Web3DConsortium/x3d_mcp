@@ -7,6 +7,7 @@ import json
 from mcp.server.fastmcp import FastMCP
 
 from validation.validate import validate_xml, validate_json
+from validation.semantic import validate_semantic as _validate_semantic
 from tools.granular import _scene
 
 
@@ -34,3 +35,17 @@ def register(mcp: FastMCP):
         xml_content = _scene.to_xml()
         result = validate_xml(xml_content)
         return json.dumps(result, indent=2)
+
+    @mcp.tool()
+    def validate_semantic(content: str) -> str:
+        """Run semantic checks on X3D XML content beyond XSD schema validation.
+
+        Detects common authoring issues that XSD cannot catch: missing geometry
+        on Shapes, empty grouping nodes, duplicate DEFs, USE references to
+        non-existent DEFs, ROUTE field/type/access-type problems, and missing
+        Viewpoints. Returns a markdown report.
+
+        Args:
+            content: The X3D XML content string to check.
+        """
+        return _validate_semantic(content)
