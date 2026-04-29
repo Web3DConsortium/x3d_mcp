@@ -64,6 +64,7 @@ x3d_mcp/
       query.py             # Node/field metadata queries
       render.py            # X3DOM HTML page wrapper for browser viewing
       scene_ops.py         # Scene CRUD: modify, remove, move nodes
+      animate.py           # Animation chain generation (TimeSensor + Interpolator + ROUTE)
     x3d_utils/
       scene.py             # Scene graph state management
       x3duom.py            # X3DUOM parser, node/field metadata
@@ -153,6 +154,16 @@ Operate on serialized X3D content (file path or inline XML) and return the modif
 | `modify_x3d_node` | Update one or more attribute values on a DEF'd node. Field changes passed as a JSON object string. Adapted from [niknarra/x3d-mcp](https://github.com/niknarra/x3d-mcp). |
 | `remove_x3d_node` | Remove a node and its children. Identify by DEF name or by node type plus index. |
 | `move_x3d_node` | Reparent a DEF'd node. Empty `new_parent_def` moves it to the Scene root. Rejects moves that would create a cycle. |
+
+### Animation Tools
+
+Generate event-driven animation in X3D content (TimeSensor + Interpolator + ROUTE chains). Adapted from [niknarra/x3d-mcp](https://github.com/niknarra/x3d-mcp).
+
+| Tool | Description |
+|------|-------------|
+| `animate_x3d_node` | Insert a complete animation chain for a target field. Auto-selects the interpolator from the field's type via X3DUOM (SFRotation -> OrientationInterpolator, SFVec3f -> PositionInterpolator, SFColor -> ColorInterpolator, SFFloat -> ScalarInterpolator, etc.). |
+| `add_x3d_route` | Validate and insert a single ROUTE statement, with full DEF / field / accessType / type-match checking. |
+| `x3d_animation_info` | Reference documentation for X3D's animation system. Topics: `interpolators`, `timesensor`, `routes`, `examples`, or empty for overview. |
 
 ## Dataset Pipeline
 
