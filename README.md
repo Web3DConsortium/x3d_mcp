@@ -63,6 +63,7 @@ x3d_mcp/
       convert.py           # Encoding conversion (XML, JSON, VRML)
       query.py             # Node/field metadata queries
       render.py            # X3DOM HTML page wrapper for browser viewing
+      scene_ops.py         # Scene CRUD: modify, remove, move nodes
     x3d_utils/
       scene.py             # Scene graph state management
       x3duom.py            # X3DUOM parser, node/field metadata
@@ -142,6 +143,16 @@ x3d_mcp/
 |------|-------------|
 | `x3dom_page` | Wrap X3D content (full document or scene fragment) in a standalone X3DOM HTML page for browser viewing. Lowercases tag/attr names, strips namespace declarations, embeds X3DOM 1.8.2 from CDN. Adapted from [niknarra/x3d-mcp](https://github.com/niknarra/x3d-mcp). |
 | `x3dom_starter` | Return a starter X3DOM HTML page with a small example scene. Useful as a known-good baseline. |
+
+### Scene Manipulation Tools
+
+Operate on serialized X3D content (file path or inline XML) and return the modified document. Distinct from the granular tools, which mutate the in-memory `SceneManager` state.
+
+| Tool | Description |
+|------|-------------|
+| `modify_x3d_node` | Update one or more attribute values on a DEF'd node. Field changes passed as a JSON object string. Adapted from [niknarra/x3d-mcp](https://github.com/niknarra/x3d-mcp). |
+| `remove_x3d_node` | Remove a node and its children. Identify by DEF name or by node type plus index. |
+| `move_x3d_node` | Reparent a DEF'd node. Empty `new_parent_def` moves it to the Scene root. Rejects moves that would create a cycle. |
 
 ## Dataset Pipeline
 
