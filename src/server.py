@@ -14,6 +14,7 @@ from mcp.server.fastmcp import FastMCP
 
 from tools import (
     workflow, granular, convert, query, validate_tool, render, scene_ops, animate,
+    prompts,
 )
 
 mcp = FastMCP("x3d-mcp")
@@ -26,6 +27,7 @@ validate_tool.register(mcp)
 render.register(mcp)
 scene_ops.register(mcp)
 animate.register(mcp)
+prompts.register(mcp)
 
 
 if __name__ == "__main__":

@@ -65,6 +65,7 @@ x3d_mcp/
       render.py            # X3DOM HTML page wrapper for browser viewing
       scene_ops.py         # Scene CRUD: modify, remove, move nodes
       animate.py           # Animation chain generation (TimeSensor + Interpolator + ROUTE)
+      prompts.py           # MCP prompts for guided workflows
     x3d_utils/
       scene.py             # Scene graph state management
       x3duom.py            # X3DUOM parser, node/field metadata
@@ -164,6 +165,17 @@ Generate event-driven animation in X3D content (TimeSensor + Interpolator + ROUT
 | `animate_x3d_node` | Insert a complete animation chain for a target field. Auto-selects the interpolator from the field's type via X3DUOM (SFRotation -> OrientationInterpolator, SFVec3f -> PositionInterpolator, SFColor -> ColorInterpolator, SFFloat -> ScalarInterpolator, etc.). |
 | `add_x3d_route` | Validate and insert a single ROUTE statement, with full DEF / field / accessType / type-match checking. |
 | `x3d_animation_info` | Reference documentation for X3D's animation system. Topics: `interpolators`, `timesensor`, `routes`, `examples`, or empty for overview. |
+
+## MCP Prompts
+
+Guided multi-step workflows. Prompts steer the LLM through the right tool sequence for tasks where ordering matters. Adapted from [niknarra/x3d-mcp](https://github.com/niknarra/x3d-mcp).
+
+| Prompt | Argument | Description |
+|--------|----------|-------------|
+| `build_scene` | `description` | Step-by-step guide to build an X3D scene from scratch. Covers both workflow and granular paths, validation, and X3DOM rendering. |
+| `audit_scene` | `content` | Audit existing X3D content for schema and authoring issues. Walks through `validate_x3d`, `validate_semantic`, `describe_node`, and the scene CRUD tools. |
+| `animate_scene` | `target_description` | Add animation. Walks through `x3d_animation_info`, `describe_node`, `animate_x3d_node`, validation, and rendering. |
+| `convert_to_x3dom` | -- | Convert X3D content to a browser-viewable X3DOM HTML page via `validate_x3d` and `x3dom_page`. |
 
 ## Dataset Pipeline
 
