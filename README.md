@@ -300,6 +300,23 @@ The container mounts `src/` and `tests/` from the host. Logs are written to `out
 - FastMCP Documentation: https://gofastmcp.com/servers/tools
 - Web3D Consortium: https://www.web3d.org
 
+## Acknowledgments
+
+The following features were adopted based on guidance from **Nikhil Narra** ([@niknarra](https://github.com/niknarra)), **Nicholas Polys** ([@npolys](https://github.com/npolys)), and **Don Brutzman** ([@brutzman](https://github.com/brutzman)) of the Web3D Consortium and X3D AI Working Group:
+
+- **Semantic validation** (Validation Tools, Layer 4 of the pipeline) -- DEF/USE consistency, ROUTE validity, Shape completeness, empty-group detection, missing-Viewpoint advisory
+- **Animation tools** -- TimeSensor + Interpolator + ROUTE chain auto-generation, single ROUTE insertion with type checking, animation reference docs
+- **X3DOM rendering** -- standalone HTML page wrapper for browser preview
+- **Scene CRUD** -- modify/remove/move operations on serialized X3D content with cycle detection
+- **MCP guided prompts** -- `build_scene`, `audit_scene`, `animate_scene`, `convert_to_x3dom`
+
+Reference implementation: [niknarra/x3d-mcp](https://github.com/niknarra/x3d-mcp). Related published work:
+
+- Narra, Marisetty, Polys, Sandbrook. *X3Test: A Headless Browser-Based Framework for Automated Performance Benchmarking of X3D/X3DOM Scenes.* Web3D '25. [doi:10.1145/3746237.3746315](https://doi.org/10.1145/3746237.3746315) -- repo: [VT-Visionarium/X3Test](https://github.com/VT-Visionarium/X3Test)
+- Earlier work probing visual/spatial knowledge in LLMs: [doi:10.1145/3665318.3677159](https://doi.org/10.1145/3665318.3677159), with the [LLM-generated X3D Model Browser](https://metagrid1.sv.vt.edu/~bsandbro/x3dgen/all_models/) as an empirical artifact.
+
+Coordination ongoing via the X3D AI Working Group ([ai@web3d.org](https://web3d.org/mailman/listinfo/ai_web3d.org)) and the Web3D Consortium.
+
 ## License
 
 [Web3D Consortium Open-Source License](https://www.web3d.org/license) -- see [LICENSE](LICENSE).
