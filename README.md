@@ -62,6 +62,7 @@ x3d_mcp/
       validate_tool.py     # Validation MCP tool wrappers
       convert.py           # Encoding conversion (XML, JSON, VRML)
       query.py             # Node/field metadata queries
+      render.py            # X3DOM HTML page wrapper for browser viewing
     x3d_utils/
       scene.py             # Scene graph state management
       x3duom.py            # X3DUOM parser, node/field metadata
@@ -134,6 +135,13 @@ x3d_mcp/
 | `describe_node` | Get full field definitions for a node type: field names, types, defaults, ranges, access types. |
 | `list_components` | List all X3D components with their support levels. |
 | `list_profiles` | List available profiles and their component requirements. |
+
+### Render Tools
+
+| Tool | Description |
+|------|-------------|
+| `x3dom_page` | Wrap X3D content (full document or scene fragment) in a standalone X3DOM HTML page for browser viewing. Lowercases tag/attr names, strips namespace declarations, embeds X3DOM 1.8.2 from CDN. Adapted from [niknarra/x3d-mcp](https://github.com/niknarra/x3d-mcp). |
+| `x3dom_starter` | Return a starter X3DOM HTML page with a small example scene. Useful as a known-good baseline. |
 
 ## Dataset Pipeline
 

@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from mcp.server.fastmcp import FastMCP
 
-from tools import workflow, granular, convert, query, validate_tool
+from tools import workflow, granular, convert, query, validate_tool, render
 
 mcp = FastMCP("x3d-mcp")
 
@@ -21,6 +21,7 @@ granular.register(mcp)
 convert.register(mcp)
 query.register(mcp)
 validate_tool.register(mcp)
+render.register(mcp)
 
 
 if __name__ == "__main__":
