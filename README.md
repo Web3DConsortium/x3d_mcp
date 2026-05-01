@@ -8,8 +8,6 @@ x3d_mcp exposes X3D capabilities to LLMs via the Model Context Protocol (MCP). I
 
 LLMs have spatial and visual understanding of 3D space. X3D (Extensible 3D) provides a declarative, XML-based means to express that understanding as valid, interoperable 3D content. This server bridges the two.
 
-**No X3D MCP server exists in the ecosystem.** This is the first.
-
 ## Design Decisions
 
 ### Language: Python
@@ -312,7 +310,7 @@ The following features were adopted based on guidance from **Nikhil Narra** ([@n
 
 Reference implementation: [niknarra/x3d-mcp](https://github.com/niknarra/x3d-mcp). Related published work:
 
-- Narra, Marisetty, Polys, Sandbrook. *X3Test: A Headless Browser-Based Framework for Automated Performance Benchmarking of X3D/X3DOM Scenes.* Web3D '25. [doi:10.1145/3746237.3746315](https://doi.org/10.1145/3746237.3746315) -- repo: [VT-Visionarium/X3Test](https://github.com/VT-Visionarium/X3Test)
+- Nikhil Narra, Anuj Marisetty, Nicholas Polys, and Ben Sandbrook. **X3Test: A Headless Browser-Based Framework for Automated Performance Benchmarking of X3D/X3DOM Scenes.** *Proceedings of the 30th International Conference on 3D Web Technology (Web3D '25)*, Siena, Italy, September 9-10, 2025. ACM, ISBN 979-8-4007-2038-3. [doi:10.1145/3746237.3746315](https://doi.org/10.1145/3746237.3746315) -- 3rd place, Web3D 2025 Tools Competition. Repo: [VT-Visionarium/X3Test](https://github.com/VT-Visionarium/X3Test). VTechworks copy: [471dddd8](https://vtechworks.lib.vt.edu/items/471dddd8-7665-4e6f-a8f5-7f9276213835).
 - Earlier work probing visual/spatial knowledge in LLMs: [doi:10.1145/3665318.3677159](https://doi.org/10.1145/3665318.3677159), with the [LLM-generated X3D Model Browser](https://metagrid1.sv.vt.edu/~bsandbro/x3dgen/all_models/) as an empirical artifact.
 
 Coordination ongoing via the X3D AI Working Group ([ai@web3d.org](https://web3d.org/mailman/listinfo/ai_web3d.org)) and the Web3D Consortium.
