@@ -7,4 +7,4 @@ This work will merge and improve capabilities found in
 * https://github.com/ricklentz/x3d_mcp
 * https://github.com/niknarra/x3d-mcp
 
-Unliess otherwise indicated for specific contributions, the default open-source license for project work is the BSD-style [Web3D Consortium Open-Source License](https://www.web3d.org/license).
+Unless otherwise indicated for specific contributions, the default open-source license for project work is the BSD-style [Web3D Consortium Open-Source License](https://www.web3d.org/license).
