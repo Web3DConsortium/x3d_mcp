@@ -1,0 +1,315 @@
+ Service app  Building
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [app internal] load build definition from Dockerfile
+#1 transferring dockerfile: 274B done
+#1 DONE 0.0s
+
+#2 [app internal] load metadata for docker.io/library/python:3.12-slim
+#2 DONE 0.4s
+
+#3 [app internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [app 1/7] FROM docker.io/library/python:3.12-slim@sha256:ccc7089399c8bb65dd1fb3ed6d55efa538a3f5e7fca3f5988ac3b5b87e593bf0
+#4 resolve docker.io/library/python:3.12-slim@sha256:ccc7089399c8bb65dd1fb3ed6d55efa538a3f5e7fca3f5988ac3b5b87e593bf0 0.0s done
+#4 DONE 0.0s
+
+#5 [app internal] load build context
+#5 transferring context: 158.23kB done
+#5 DONE 0.0s
+
+#6 [app 2/7] WORKDIR /app
+#6 CACHED
+
+#7 [app 3/7] COPY pyproject.toml .
+#7 CACHED
+
+#8 [app 4/7] COPY src/ src/
+#8 CACHED
+
+#9 [app 5/7] COPY tests/ tests/
+#9 DONE 0.0s
+
+#10 [app 6/7] COPY dataset/ dataset/
+#10 DONE 0.0s
+
+#11 [app 7/7] RUN pip install --no-cache-dir ".[dev]"
+#11 1.063 Processing /app
+#11 1.064   Installing build dependencies: started
+#11 1.975   Installing build dependencies: finished with status 'done'
+#11 1.976   Getting requirements to build wheel: started
+#11 2.098   Getting requirements to build wheel: finished with status 'done'
+#11 2.099   Preparing metadata (pyproject.toml): started
+#11 2.201   Preparing metadata (pyproject.toml): finished with status 'done'
+#11 2.260 Collecting mcp>=1.7 (from x3d-mcp==0.1.0)
+#11 2.311   Downloading mcp-1.26.0-py3-none-any.whl.metadata (89 kB)
+#11 2.357 Collecting x3d>=4.0.65 (from x3d-mcp==0.1.0)
+#11 2.372   Downloading x3d-4.0.65.0-py3-none-any.whl.metadata (2.5 kB)
+#11 2.496 Collecting lxml>=6.0 (from x3d-mcp==0.1.0)
+#11 2.510   Downloading lxml-6.0.2-cp312-cp312-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl.metadata (3.6 kB)
+#11 2.534 Collecting xmlschema>=4.3 (from x3d-mcp==0.1.0)
+#11 2.547   Downloading xmlschema-4.3.1-py3-none-any.whl.metadata (8.0 kB)
+#11 2.580 Collecting jsonschema>=4.26 (from x3d-mcp==0.1.0)
+#11 2.594   Downloading jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+#11 2.625 Collecting pytest>=8.0 (from x3d-mcp==0.1.0)
+#11 2.639   Downloading pytest-9.0.2-py3-none-any.whl.metadata (7.6 kB)
+#11 2.657 Collecting attrs>=22.2.0 (from jsonschema>=4.26->x3d-mcp==0.1.0)
+#11 2.671   Downloading attrs-25.4.0-py3-none-any.whl.metadata (10 kB)
+#11 2.688 Collecting jsonschema-specifications>=2023.03.6 (from jsonschema>=4.26->x3d-mcp==0.1.0)
+#11 2.701   Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+#11 2.725 Collecting referencing>=0.28.4 (from jsonschema>=4.26->x3d-mcp==0.1.0)
+#11 2.739   Downloading referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+#11 2.895 Collecting rpds-py>=0.25.0 (from jsonschema>=4.26->x3d-mcp==0.1.0)
+#11 2.911   Downloading rpds_py-0.30.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl.metadata (4.1 kB)
+#11 2.932 Collecting anyio>=4.5 (from mcp>=1.7->x3d-mcp==0.1.0)
+#11 2.945   Downloading anyio-4.12.1-py3-none-any.whl.metadata (4.3 kB)
+#11 2.961 Collecting httpx-sse>=0.4 (from mcp>=1.7->x3d-mcp==0.1.0)
+#11 2.974   Downloading httpx_sse-0.4.3-py3-none-any.whl.metadata (9.7 kB)
+#11 2.995 Collecting httpx>=0.27.1 (from mcp>=1.7->x3d-mcp==0.1.0)
+#11 3.008   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+#11 3.031 Collecting pydantic-settings>=2.5.2 (from mcp>=1.7->x3d-mcp==0.1.0)
+#11 3.047   Downloading pydantic_settings-2.13.1-py3-none-any.whl.metadata (3.4 kB)
+#11 3.121 Collecting pydantic<3.0.0,>=2.11.0 (from mcp>=1.7->x3d-mcp==0.1.0)
+#11 3.135   Downloading pydantic-2.12.5-py3-none-any.whl.metadata (90 kB)
+#11 3.163 Collecting pyjwt>=2.10.1 (from pyjwt[crypto]>=2.10.1->mcp>=1.7->x3d-mcp==0.1.0)
+#11 3.176   Downloading pyjwt-2.11.0-py3-none-any.whl.metadata (4.0 kB)
+#11 3.194 Collecting python-multipart>=0.0.9 (from mcp>=1.7->x3d-mcp==0.1.0)
+#11 3.209   Downloading python_multipart-0.0.22-py3-none-any.whl.metadata (1.8 kB)
+#11 3.229 Collecting sse-starlette>=1.6.1 (from mcp>=1.7->x3d-mcp==0.1.0)
+#11 3.243   Downloading sse_starlette-3.3.2-py3-none-any.whl.metadata (14 kB)
+#11 3.270 Collecting starlette>=0.27 (from mcp>=1.7->x3d-mcp==0.1.0)
+#11 3.283   Downloading starlette-0.52.1-py3-none-any.whl.metadata (6.3 kB)
+#11 3.303 Collecting typing-extensions>=4.9.0 (from mcp>=1.7->x3d-mcp==0.1.0)
+#11 3.317   Downloading typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+#11 3.332 Collecting typing-inspection>=0.4.1 (from mcp>=1.7->x3d-mcp==0.1.0)
+#11 3.346   Downloading typing_inspection-0.4.2-py3-none-any.whl.metadata (2.6 kB)
+#11 3.373 Collecting uvicorn>=0.31.1 (from mcp>=1.7->x3d-mcp==0.1.0)
+#11 3.386   Downloading uvicorn-0.41.0-py3-none-any.whl.metadata (6.7 kB)
+#11 3.404 Collecting iniconfig>=1.0.1 (from pytest>=8.0->x3d-mcp==0.1.0)
+#11 3.417   Downloading iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+#11 3.437 Collecting packaging>=22 (from pytest>=8.0->x3d-mcp==0.1.0)
+#11 3.450   Downloading packaging-26.0-py3-none-any.whl.metadata (3.3 kB)
+#11 3.468 Collecting pluggy<2,>=1.5 (from pytest>=8.0->x3d-mcp==0.1.0)
+#11 3.482   Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+#11 3.505 Collecting pygments>=2.7.2 (from pytest>=8.0->x3d-mcp==0.1.0)
+#11 3.519   Downloading pygments-2.19.2-py3-none-any.whl.metadata (2.5 kB)
+#11 3.547 Collecting elementpath<6.0.0,>=5.1.0 (from xmlschema>=4.3->x3d-mcp==0.1.0)
+#11 3.562   Downloading elementpath-5.1.1-py3-none-any.whl.metadata (7.0 kB)
+#11 3.581 Collecting idna>=2.8 (from anyio>=4.5->mcp>=1.7->x3d-mcp==0.1.0)
+#11 3.595   Downloading idna-3.11-py3-none-any.whl.metadata (8.4 kB)
+#11 3.620 Collecting certifi (from httpx>=0.27.1->mcp>=1.7->x3d-mcp==0.1.0)
+#11 3.634   Downloading certifi-2026.2.25-py3-none-any.whl.metadata (2.5 kB)
+#11 3.655 Collecting httpcore==1.* (from httpx>=0.27.1->mcp>=1.7->x3d-mcp==0.1.0)
+#11 3.669   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+#11 3.690 Collecting h11>=0.16 (from httpcore==1.*->httpx>=0.27.1->mcp>=1.7->x3d-mcp==0.1.0)
+#11 3.704   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+#11 3.727 Collecting annotated-types>=0.6.0 (from pydantic<3.0.0,>=2.11.0->mcp>=1.7->x3d-mcp==0.1.0)
+#11 3.741   Downloading annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+#11 4.124 Collecting pydantic-core==2.41.5 (from pydantic<3.0.0,>=2.11.0->mcp>=1.7->x3d-mcp==0.1.0)
+#11 4.138   Downloading pydantic_core-2.41.5-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl.metadata (7.3 kB)
+#11 4.165 Collecting python-dotenv>=0.21.0 (from pydantic-settings>=2.5.2->mcp>=1.7->x3d-mcp==0.1.0)
+#11 4.179   Downloading python_dotenv-1.2.2-py3-none-any.whl.metadata (27 kB)
+#11 4.306 Collecting cryptography>=3.4.0 (from pyjwt[crypto]>=2.10.1->mcp>=1.7->x3d-mcp==0.1.0)
+#11 4.320   Downloading cryptography-46.0.5-cp311-abi3-manylinux_2_34_aarch64.whl.metadata (5.7 kB)
+#11 4.360 Collecting click>=7.0 (from uvicorn>=0.31.1->mcp>=1.7->x3d-mcp==0.1.0)
+#11 4.374   Downloading click-8.3.1-py3-none-any.whl.metadata (2.6 kB)
+#11 4.440 Collecting cffi>=2.0.0 (from cryptography>=3.4.0->pyjwt[crypto]>=2.10.1->mcp>=1.7->x3d-mcp==0.1.0)
+#11 4.454   Downloading cffi-2.0.0-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.whl.metadata (2.6 kB)
+#11 4.472 Collecting pycparser (from cffi>=2.0.0->cryptography>=3.4.0->pyjwt[crypto]>=2.10.1->mcp>=1.7->x3d-mcp==0.1.0)
+#11 4.485   Downloading pycparser-3.0-py3-none-any.whl.metadata (8.2 kB)
+#11 4.502 Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)
+#11 4.524 Downloading lxml-6.0.2-cp312-cp312-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl (5.0 MB)
+#11 4.954    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.0/5.0 MB 11.7 MB/s eta 0:00:00
+#11 4.967 Downloading mcp-1.26.0-py3-none-any.whl (233 kB)
+#11 5.000 Downloading pytest-9.0.2-py3-none-any.whl (374 kB)
+#11 5.047 Downloading x3d-4.0.65.0-py3-none-any.whl (428 kB)
+#11 5.098 Downloading xmlschema-4.3.1-py3-none-any.whl (469 kB)
+#11 5.150 Downloading anyio-4.12.1-py3-none-any.whl (113 kB)
+#11 5.172 Downloading attrs-25.4.0-py3-none-any.whl (67 kB)
+#11 5.190 Downloading elementpath-5.1.1-py3-none-any.whl (259 kB)
+#11 5.226 Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+#11 5.244 Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+#11 5.264 Downloading httpx_sse-0.4.3-py3-none-any.whl (9.0 kB)
+#11 5.277 Downloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+#11 5.291 Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+#11 5.305 Downloading packaging-26.0-py3-none-any.whl (74 kB)
+#11 5.324 Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+#11 5.338 Downloading pydantic-2.12.5-py3-none-any.whl (463 kB)
+#11 5.390 Downloading pydantic_core-2.41.5-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl (1.9 MB)
+#11 5.555    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.9/1.9 MB 11.8 MB/s eta 0:00:00
+#11 5.569 Downloading pydantic_settings-2.13.1-py3-none-any.whl (58 kB)
+#11 5.586 Downloading pygments-2.19.2-py3-none-any.whl (1.2 MB)
+#11 5.692    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 11.8 MB/s eta 0:00:00
+#11 5.705 Downloading pyjwt-2.11.0-py3-none-any.whl (28 kB)
+#11 5.720 Downloading python_multipart-0.0.22-py3-none-any.whl (24 kB)
+#11 5.734 Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+#11 5.750 Downloading rpds_py-0.30.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl (390 kB)
+#11 5.796 Downloading sse_starlette-3.3.2-py3-none-any.whl (14 kB)
+#11 5.810 Downloading starlette-0.52.1-py3-none-any.whl (74 kB)
+#11 5.829 Downloading typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+#11 5.845 Downloading typing_inspection-0.4.2-py3-none-any.whl (14 kB)
+#11 5.858 Downloading uvicorn-0.41.0-py3-none-any.whl (68 kB)
+#11 5.876 Downloading annotated_types-0.7.0-py3-none-any.whl (13 kB)
+#11 5.889 Downloading click-8.3.1-py3-none-any.whl (108 kB)
+#11 5.911 Downloading cryptography-46.0.5-cp311-abi3-manylinux_2_34_aarch64.whl (4.3 MB)
+#11 6.277    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.3/4.3 MB 11.7 MB/s eta 0:00:00
+#11 6.290 Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+#11 6.305 Downloading idna-3.11-py3-none-any.whl (71 kB)
+#11 6.324 Downloading python_dotenv-1.2.2-py3-none-any.whl (22 kB)
+#11 6.338 Downloading certifi-2026.2.25-py3-none-any.whl (153 kB)
+#11 6.363 Downloading cffi-2.0.0-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.whl (220 kB)
+#11 6.395 Downloading pycparser-3.0-py3-none-any.whl (48 kB)
+#11 6.422 Building wheels for collected packages: x3d-mcp
+#11 6.422   Building wheel for x3d-mcp (pyproject.toml): started
+#11 6.532   Building wheel for x3d-mcp (pyproject.toml): finished with status 'done'
+#11 6.532   Created wheel for x3d-mcp: filename=x3d_mcp-0.1.0-py3-none-any.whl size=15042 sha256=5143342162b751888ee822d990096ab766e3fb0c6023c3463db2617d97b2236b
+#11 6.532   Stored in directory: /tmp/pip-ephem-wheel-cache-zbz4oqlf/wheels/54/1b/b7/aa63e25c8f14f4f2ae7b04e6097bdecb770e455c5c1ee0a600
+#11 6.533 Successfully built x3d-mcp
+#11 6.564 Installing collected packages: typing-extensions, rpds-py, python-multipart, python-dotenv, pyjwt, pygments, pycparser, pluggy, packaging, lxml, iniconfig, idna, httpx-sse, h11, elementpath, click, certifi, attrs, annotated-types, xmlschema, uvicorn, typing-inspection, referencing, pytest, pydantic-core, httpcore, cffi, anyio, x3d, starlette, pydantic, jsonschema-specifications, httpx, cryptography, sse-starlette, pydantic-settings, jsonschema, mcp, x3d-mcp
+#11 8.918 Successfully installed annotated-types-0.7.0 anyio-4.12.1 attrs-25.4.0 certifi-2026.2.25 cffi-2.0.0 click-8.3.1 cryptography-46.0.5 elementpath-5.1.1 h11-0.16.0 httpcore-1.0.9 httpx-0.28.1 httpx-sse-0.4.3 idna-3.11 iniconfig-2.3.0 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 lxml-6.0.2 mcp-1.26.0 packaging-26.0 pluggy-1.6.0 pycparser-3.0 pydantic-2.12.5 pydantic-core-2.41.5 pydantic-settings-2.13.1 pygments-2.19.2 pyjwt-2.11.0 pytest-9.0.2 python-dotenv-1.2.2 python-multipart-0.0.22 referencing-0.37.0 rpds-py-0.30.0 sse-starlette-3.3.2 starlette-0.52.1 typing-extensions-4.15.0 typing-inspection-0.4.2 uvicorn-0.41.0 x3d-4.0.65.0 x3d-mcp-0.1.0 xmlschema-4.3.1
+#11 8.918 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#11 8.992 
+#11 8.992 [notice] A new release of pip is available: 25.0.1 -> 26.0.1
+#11 8.992 [notice] To update, run: pip install --upgrade pip
+#11 DONE 9.2s
+
+#12 [app] exporting to image
+#12 exporting layers
+#12 exporting layers 2.1s done
+#12 exporting manifest sha256:1524728ebcd0d066bf707ee722be3542e56fa0d3c7a707f43cd5203ad4cc7a6e
+#12 exporting manifest sha256:1524728ebcd0d066bf707ee722be3542e56fa0d3c7a707f43cd5203ad4cc7a6e done
+#12 exporting config sha256:028e0392fae325a01329cd05c03781ddf146964b3479f9adea2493223c3ec51c done
+#12 exporting attestation manifest sha256:ae3045a64bac607af655e3cf182ffd5e45f0fc916ec134cc9e2ee487fa0ae121 done
+#12 exporting manifest list sha256:df3419780ffb47ec131a74a1623165eaedb68a6f57131a74be1ae61b3df0cfa6 done
+#12 naming to docker.io/library/x3d_mcp-app:latest done
+#12 unpacking to docker.io/library/x3d_mcp-app:latest
+#12 unpacking to docker.io/library/x3d_mcp-app:latest 0.4s done
+ Service app  Built
+#12 DONE 2.5s
+
+#13 [app] resolving provenance for metadata file
+#13 DONE 0.0s
+ Container x3d_mcp-app-1  Creating
+ Container x3d_mcp-app-1  Created
+Attaching to app-1
+app-1  | ============================= test session starts ==============================
+app-1  | platform linux -- Python 3.12.13, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python
+app-1  | cachedir: .pytest_cache
+app-1  | rootdir: /app
+app-1  | configfile: pyproject.toml
+app-1  | plugins: anyio-4.12.1
+app-1  | collecting ... collected 108 items
+app-1  | 
+app-1  | tests/test_augment.py::TestAugmentInstruction::test_returns_string PASSED [  0%]
+app-1  | tests/test_augment.py::TestAugmentInstruction::test_diversity_zero_returns_original PASSED [  1%]
+app-1  | tests/test_augment.py::TestAugmentInstruction::test_high_diversity_changes_text PASSED [  2%]
+app-1  | tests/test_augment.py::TestMutateX3D::test_color_mutation_stays_in_range PASSED [  3%]
+app-1  | tests/test_augment.py::TestMutateX3D::test_transform_mutation_changes_values PASSED [  4%]
+app-1  | tests/test_augment.py::TestAugmentExample::test_produces_augmented_source PASSED [  5%]
+app-1  | tests/test_augment.py::TestAugmentExample::test_preserves_original_metadata_fields PASSED [  6%]
+app-1  | tests/test_augment.py::TestAugmentFile::test_ratio_control PASSED        [  7%]
+app-1  | tests/test_augment.py::TestAugmentFile::test_max_tokens_filter PASSED    [  8%]
+app-1  | tests/test_augment.py::TestAugmentFile::test_reproducibility_with_seed PASSED [  9%]
+app-1  | tests/test_augment.py::TestAugmentFile::test_all_augmented_tagged PASSED [ 10%]
+app-1  | tests/test_augment.py::TestFilterFile::test_filter_by_source_original PASSED [ 11%]
+app-1  | tests/test_augment.py::TestFilterFile::test_filter_by_source_augmented PASSED [ 12%]
+app-1  | tests/test_augment.py::TestFilterFile::test_filter_by_tokens PASSED      [ 12%]
+app-1  | tests/test_augment.py::TestFilterFile::test_filter_all_no_filter PASSED  [ 13%]
+app-1  | tests/test_dataset.py::TestNormalizeMetadata::test_dict_passthrough PASSED [ 14%]
+app-1  | tests/test_dataset.py::TestNormalizeMetadata::test_string_parsed_as_json PASSED [ 15%]
+app-1  | tests/test_dataset.py::TestNormalizeMetadata::test_plain_string_wrapped PASSED [ 16%]
+app-1  | tests/test_dataset.py::TestNormalizeMetadata::test_none_handled PASSED   [ 17%]
+app-1  | tests/test_dataset.py::TestNormalizeMetadata::test_wrong_type_coerced PASSED [ 18%]
+app-1  | tests/test_dataset.py::TestNormalizeMetadata::test_extra_fields_preserved PASSED [ 19%]
+app-1  | tests/test_dataset.py::TestNormalizeMetadata::test_all_defaults_filled PASSED [ 20%]
+app-1  | tests/test_dataset.py::TestValidateExample::test_valid_example PASSED    [ 21%]
+app-1  | tests/test_dataset.py::TestValidateExample::test_missing_instruction PASSED [ 22%]
+app-1  | tests/test_dataset.py::TestValidateExample::test_empty_instruction PASSED [ 23%]
+app-1  | tests/test_dataset.py::TestValidateExample::test_missing_output PASSED   [ 24%]
+app-1  | tests/test_dataset.py::TestValidateExample::test_string_metadata_flagged PASSED [ 25%]
+app-1  | tests/test_dataset.py::TestValidateExample::test_no_metadata_is_ok PASSED [ 25%]
+app-1  | tests/test_dataset.py::TestTrainingExample::test_from_dict_with_struct_metadata PASSED [ 26%]
+app-1  | tests/test_dataset.py::TestTrainingExample::test_from_dict_with_string_metadata PASSED [ 27%]
+app-1  | tests/test_dataset.py::TestTrainingExample::test_round_trip PASSED       [ 28%]
+app-1  | tests/test_dataset.py::TestNormalizeFile::test_normalizes_mixed_metadata PASSED [ 29%]
+app-1  | tests/test_dataset.py::TestNormalizeFile::test_skips_invalid_rows PASSED [ 30%]
+app-1  | tests/test_dataset.py::TestValidateFile::test_all_valid PASSED           [ 31%]
+app-1  | tests/test_dataset.py::TestValidateFile::test_detects_string_metadata PASSED [ 32%]
+app-1  | tests/test_generators.py::TestIndexedFaceSet::test_generates_valid_example PASSED [ 33%]
+app-1  | tests/test_generators.py::TestIndexedFaceSet::test_coord_index_has_terminators PASSED [ 34%]
+app-1  | tests/test_generators.py::TestIndexedFaceSet::test_coord_index_no_out_of_bounds PASSED [ 35%]
+app-1  | tests/test_generators.py::TestIndexedFaceSet::test_short_complexity_smaller_than_long PASSED [ 36%]
+app-1  | tests/test_generators.py::TestIndexedFaceSet::test_passes_xsd_validation PASSED [ 37%]
+app-1  | tests/test_generators.py::TestIndexedFaceSet::test_metadata_populated PASSED [ 37%]
+app-1  | tests/test_generators.py::TestExtrusion::test_generates_valid_example PASSED [ 38%]
+app-1  | tests/test_generators.py::TestExtrusion::test_cross_section_is_closed PASSED [ 39%]
+app-1  | tests/test_generators.py::TestExtrusion::test_passes_xsd_validation PASSED [ 40%]
+app-1  | tests/test_generators.py::TestExtrusion::test_metadata_has_sequence_lengths PASSED [ 41%]
+app-1  | tests/test_generators.py::TestInterpolator::test_generates_valid_example PASSED [ 42%]
+app-1  | tests/test_generators.py::TestInterpolator::test_key_value_counts_match PASSED [ 43%]
+app-1  | tests/test_generators.py::TestInterpolator::test_passes_xsd_validation PASSED [ 44%]
+app-1  | tests/test_generators.py::TestInterpolator::test_has_routes PASSED       [ 45%]
+app-1  | tests/test_generators.py::TestInterpolator::test_long_has_more_values_than_short PASSED [ 46%]
+app-1  | tests/test_generators.py::TestGenerateExamples::test_generates_all_types PASSED [ 47%]
+app-1  | tests/test_generators.py::TestGenerateExamples::test_mixed_complexity PASSED [ 48%]
+app-1  | tests/test_generators.py::TestGenerateExamples::test_all_pass_validation PASSED [ 49%]
+app-1  | tests/test_scene.py::test_create_node PASSED                             [ 50%]
+app-1  | tests/test_scene.py::test_create_node_unknown_type PASSED                [ 50%]
+app-1  | tests/test_scene.py::test_set_field PASSED                               [ 51%]
+app-1  | tests/test_scene.py::test_set_field_invalid PASSED                       [ 52%]
+app-1  | tests/test_scene.py::test_add_child PASSED                               [ 53%]
+app-1  | tests/test_scene.py::test_add_child_appearance_material PASSED           [ 54%]
+app-1  | tests/test_scene.py::test_def_node PASSED                                [ 55%]
+app-1  | tests/test_scene.py::test_def_node_duplicate PASSED                      [ 56%]
+app-1  | tests/test_scene.py::test_use_node PASSED                                [ 57%]
+app-1  | tests/test_scene.py::test_use_node_unknown PASSED                        [ 58%]
+app-1  | tests/test_scene.py::test_add_route PASSED                               [ 59%]
+app-1  | tests/test_scene.py::test_add_route_no_def PASSED                        [ 60%]
+app-1  | tests/test_scene.py::test_remove_node PASSED                             [ 61%]
+app-1  | tests/test_scene.py::test_remove_node_with_parent PASSED                 [ 62%]
+app-1  | tests/test_scene.py::test_add_meta PASSED                                [ 62%]
+app-1  | tests/test_scene.py::test_set_profile PASSED                             [ 63%]
+app-1  | tests/test_scene.py::test_set_profile_invalid PASSED                     [ 64%]
+app-1  | tests/test_scene.py::test_to_xml PASSED                                  [ 65%]
+app-1  | tests/test_scene.py::test_to_json PASSED                                 [ 66%]
+app-1  | tests/test_scene.py::test_to_vrml PASSED                                 [ 67%]
+app-1  | tests/test_scene.py::test_reset PASSED                                   [ 68%]
+app-1  | tests/test_scene.py::test_complete_scene PASSED                          [ 69%]
+app-1  | tests/test_tools.py::test_workflow_create_scene PASSED                   [ 70%]
+app-1  | tests/test_tools.py::test_workflow_create_geometry PASSED                [ 71%]
+app-1  | tests/test_tools.py::test_workflow_compose_scene PASSED                  [ 72%]
+app-1  | tests/test_tools.py::test_granular_scene_building PASSED                 [ 73%]
+app-1  | tests/test_tools.py::test_granular_def_use PASSED                        [ 74%]
+app-1  | tests/test_tools.py::test_query_list_nodes PASSED                        [ 75%]
+app-1  | tests/test_tools.py::test_query_describe_node PASSED                     [ 75%]
+app-1  | tests/test_tools.py::test_query_list_components PASSED                   [ 76%]
+app-1  | tests/test_tools.py::test_query_list_profiles PASSED                     [ 77%]
+app-1  | tests/test_tools.py::test_convert_xml_to_json PASSED                     [ 78%]
+app-1  | tests/test_tools.py::test_convert_xml_to_vrml PASSED                     [ 79%]
+app-1  | tests/test_validation.py::test_valid_minimal_scene PASSED                [ 80%]
+app-1  | tests/test_validation.py::test_valid_scene_with_xsi PASSED               [ 81%]
+app-1  | tests/test_validation.py::test_invalid_unknown_node PASSED               [ 82%]
+app-1  | tests/test_validation.py::test_invalid_malformed_xml PASSED              [ 83%]
+app-1  | tests/test_validation.py::test_invalid_missing_profile PASSED            [ 84%]
+app-1  | tests/test_validation.py::test_valid_json PASSED                         [ 85%]
+app-1  | tests/test_validation.py::test_invalid_json_parse PASSED                 [ 86%]
+app-1  | tests/test_validation.py::test_invalid_json_missing_x3d PASSED           [ 87%]
+app-1  | tests/test_validation.py::test_invalid_json_missing_fields PASSED        [ 87%]
+app-1  | tests/test_x3duom.py::test_loads_x3duom PASSED                           [ 88%]
+app-1  | tests/test_x3duom.py::test_concrete_nodes_count PASSED                   [ 89%]
+app-1  | tests/test_x3duom.py::test_box_node PASSED                               [ 90%]
+app-1  | tests/test_x3duom.py::test_material_node PASSED                          [ 91%]
+app-1  | tests/test_x3duom.py::test_transform_node PASSED                         [ 92%]
+app-1  | tests/test_x3duom.py::test_get_node_fields PASSED                        [ 93%]
+app-1  | tests/test_x3duom.py::test_get_node_fields_unknown PASSED                [ 94%]
+app-1  | tests/test_x3duom.py::test_components PASSED                             [ 95%]
+app-1  | tests/test_x3duom.py::test_profiles PASSED                               [ 96%]
+app-1  | tests/test_x3duom.py::test_field_types PASSED                            [ 97%]
+app-1  | tests/test_x3duom.py::test_abstract_types PASSED                         [ 98%]
+app-1  | tests/test_x3duom.py::test_container_field PASSED                        [ 99%]
+app-1  | tests/test_x3duom.py::test_singleton PASSED                              [100%]
+app-1  | 
+app-1  | ============================= 108 passed in 1.69s ==============================
+[Kapp-1 exited with code 0
