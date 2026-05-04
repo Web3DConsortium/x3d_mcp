@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "x3d-mcp"
+version = "0.1.0"
+description = "MCP server for generating, validating, and converting valid X3D content"
+requires-python = ">=3.12"
+dependencies = [
+    "mcp>=1.7",
+    "x3d>=4.0.65",
+    "lxml>=6.0",
+    "xmlschema>=4.3",
+    "jsonschema>=4.26",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

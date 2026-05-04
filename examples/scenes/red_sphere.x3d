@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE X3D PUBLIC "ISO//Web3D//DTD X3D 4.0//EN" "https://www.web3d.org/specifications/x3d-4.0.dtd">
+<X3D profile='Interchange' version='4.1'>
+  <Scene>
+    <Shape>
+      <Appearance>
+        <Material diffuseColor='0.9 0.1 0.1'/>
+      </Appearance>
+      <Sphere radius='1.5'/>
+    </Shape>
+  </Scene>
+</X3D>
