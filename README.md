@@ -1,6 +1,8 @@
 # x3d_mcp
 
-[Model Context Protocol (MCP)](https://en.wikipedia.org/wiki/Model_Context_Protocol) server for generating, validating, and converting valid X3D content using assets and tools developed using the official X3D International Standards.
+[Extensible 3D (X3D) Graphics](https://www.web3d.org/x3d/what-x3d) is the open, royalty-free International Standard for publishing, viewing, printing, and archiving interactive 3D models on the Web. X3D further supports the Humanoid Animation (HAnim) Standard which includes full-fidelity representations for articulated skeleton and skin of the human body.  These are powerful capabilities. 
+
+This open project provides a [Model Context Protocol (MCP)](https://en.wikipedia.org/wiki/Model_Context_Protocol) server for generating, validating, and converting valid X3D content using assets and tools developed using the official X3D International Standards.
 
 This project supports the [AI with X3D Special Interest Group](https://www.web3d.org/working-groups/ai-x3d) of the [Web3D Consortium](https://www.web3d.org), merging capabilities from [ricklentz/x3d_mcp](https://github.com/ricklentz/x3d_mcp) and [niknarra/x3d-mcp](https://github.com/niknarra/x3d-mcp). Unless otherwise indicated for specific contributions, the default open-source license is the BSD-style [Web3D Consortium Open-Source License](https://www.web3d.org/license).
 
