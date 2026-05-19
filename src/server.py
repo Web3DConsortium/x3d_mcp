@@ -12,10 +12,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from mcp.server.fastmcp import FastMCP
 
+_real_stdout = sys.stdout
+sys.stdout = sys.stderr
 from tools import (
     workflow, granular, convert, query, validate_tool, render, scene_ops, animate,
     prompts,
 )
+sys.stdout = _real_stdout
 
 mcp = FastMCP("x3d-mcp")
 
