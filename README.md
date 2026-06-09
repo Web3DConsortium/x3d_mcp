@@ -12,6 +12,102 @@ x3d_mcp exposes X3D capabilities to LLMs via the Model Context Protocol (MCP). I
 
 LLMs have spatial and visual understanding of 3D space. X3D (Extensible 3D) provides a declarative, XML-based means to express that understanding as valid, interoperable 3D content. This server bridges the two.
 
+## Quickstart
+
+**Prerequisites:** Python 3.12+, [uv](https://docs.astral.sh/uv/), git
+
+```bash
+git clone https://github.com/Web3DConsortium/x3d_mcp.git
+cd x3d_mcp
+uv sync
+```
+
+To verify the server starts correctly:
+
+```bash
+uv run python src/server.py
+```
+
+The server uses stdio transport and is designed to be launched by an MCP client, not run standalone. See the client configuration sections below.
+
+### MCP Inspector
+
+Test the server interactively using the MCP Inspector (bundled with the `mcp[cli]` dependency):
+
+```bash
+uv run mcp dev src/server.py
+```
+
+This opens a web UI where you can call each tool, inspect input schemas, and view responses — useful for verifying your setup before connecting a client.
+
+## Client Configuration
+
+### Claude Desktop
+
+Add to your `claude_desktop_config.json`:
+- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "x3d": {
+      "command": "uv",
+      "args": ["run", "python", "src/server.py"],
+      "cwd": "/absolute/path/to/x3d_mcp"
+    }
+  }
+}
+```
+
+Replace `/absolute/path/to/x3d_mcp` with the actual path to this repository. Restart Claude Desktop after saving.
+
+### Claude Code
+
+Run this command from your terminal to register the server globally:
+
+```bash
+claude mcp add x3d -- uv run --directory /absolute/path/to/x3d_mcp python src/server.py
+```
+
+Or add it manually to `~/.claude/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "x3d": {
+      "command": "uv",
+      "args": ["run", "--directory", "/absolute/path/to/x3d_mcp", "python", "src/server.py"]
+    }
+  }
+}
+```
+
+### Cursor
+
+Add to `.cursor/mcp.json` in your project root (create the file if it doesn't exist):
+
+```json
+{
+  "mcpServers": {
+    "x3d": {
+      "command": "uv",
+      "args": ["run", "--directory", "/absolute/path/to/x3d_mcp", "python", "src/server.py"]
+    }
+  }
+}
+```
+
+Using `--directory` is more reliable than `cwd` for paths containing spaces. If Cursor cannot find `uv`, use its full path (e.g. `/opt/homebrew/bin/uv` on macOS).
+
+### Other MCP Clients
+
+Any client that supports the MCP stdio transport can connect to this server. Use the following command:
+
+```
+uv run --directory /absolute/path/to/x3d_mcp python src/server.py
+```
+
 ## Design Decisions
 
 ### Language: Python
