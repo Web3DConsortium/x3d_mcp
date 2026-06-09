@@ -18,6 +18,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from mcp.server.fastmcp import FastMCP
+from starlette.responses import JSONResponse
 
 _TRANSPORT = os.environ.get("MCP_TRANSPORT", "stdio").lower()
 _IS_HTTP = _TRANSPORT in ("http", "streamable-http")
@@ -46,6 +47,30 @@ render.register(mcp)
 scene_ops.register(mcp)
 animate.register(mcp)
 prompts.register(mcp)
+
+
+# Friendly responses on the root and /pulse paths under HTTP transport.
+# These are no-ops under stdio. Without them, browser and platform hits
+# to "/" return a 404 from FastMCP's app -- correct for the MCP protocol
+# but unfriendly to humans and to host platforms probing for liveness.
+# /pulse is intended as the configured health-check endpoint on hosts
+# like Render and is kept dependency-free so it stays fast and reliable.
+@mcp.custom_route("/", methods=["GET"])
+async def _root(_request):
+    return JSONResponse(
+        {
+            "name": "x3d-mcp",
+            "description": "Web3D Consortium MCP server for X3D 4.0/4.1 authoring.",
+            "mcp_endpoint": mcp.settings.streamable_http_path,
+            "health_endpoint": "/pulse",
+            "repository": "https://github.com/Web3DConsortium/x3d_mcp",
+        }
+    )
+
+
+@mcp.custom_route("/pulse", methods=["GET"])
+async def _pulse(_request):
+    return JSONResponse({"status": "ok"})
 
 
 if __name__ == "__main__":
