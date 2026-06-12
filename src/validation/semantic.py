@@ -178,9 +178,17 @@ def _check_shape_completeness(scene: etree._Element) -> list[Diagnostic]:
     return diagnostics
 
 
+# HAnim grouping nodes are meaningful even when childless: an HAnimJoint
+# defines an articulation center, and HAnimSegment/HAnimSite mark named body
+# locations -- LOA-3/LOA-4 skeletons legitimately have many empty leaf joints.
+_EMPTY_GROUP_EXEMPT = {"HAnimJoint", "HAnimSegment", "HAnimSite"}
+
+
 def _check_empty_groups(scene: etree._Element) -> list[Diagnostic]:
     diagnostics: list[Diagnostic] = []
     for tag in _GROUPING_NODES:
+        if tag in _EMPTY_GROUP_EXEMPT:
+            continue
         for el in scene.iter(tag):
             if len(el) == 0:
                 if el.get("USE"):
