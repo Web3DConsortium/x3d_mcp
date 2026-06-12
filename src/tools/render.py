@@ -49,6 +49,9 @@ def _element_to_x3dom_html(el: etree._Element, depth: int = 0) -> str:
     for attr_name, attr_val in el.attrib.items():
         if attr_name.startswith("{") or ":" in attr_name:
             continue
+        # Escape for HTML attribute context -- MFString values (e.g.
+        # NavigationInfo type='"EXAMINE" "ANY"') contain literal quotes.
+        attr_val = attr_val.replace("&", "&amp;").replace('"', "&quot;")
         attrs.append(f'{attr_name.lower()}="{attr_val}"')
 
     indent = "    " * depth
@@ -87,7 +90,9 @@ def _extract_scene_content(x3d_content: str) -> str:
         return _indent_content(stripped, 12)
 
     try:
-        parser = etree.XMLParser(remove_blank_text=True)
+        parser = etree.XMLParser(
+            remove_blank_text=True, remove_comments=True, remove_pis=True
+        )
         tree = etree.fromstring(stripped.encode(), parser)
     except etree.XMLSyntaxError:
         return _indent_content(stripped, 12)

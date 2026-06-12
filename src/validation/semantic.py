@@ -183,6 +183,10 @@ def _check_empty_groups(scene: etree._Element) -> list[Diagnostic]:
     for tag in _GROUPING_NODES:
         for el in scene.iter(tag):
             if len(el) == 0:
+                if el.get("USE"):
+                    # A USE reference reuses the DEF'd node wholesale; it is
+                    # intentionally childless and not an empty group.
+                    continue
                 def_name = el.get("DEF", "")
                 label = f" (DEF={def_name!r})" if def_name else ""
                 diagnostics.append(Diagnostic(
@@ -194,6 +198,27 @@ def _check_empty_groups(scene: etree._Element) -> list[Diagnostic]:
                     def_name=def_name,
                 ))
     return diagnostics
+
+
+def _resolve_route_field(fields: dict, field_name: str, direction: str) -> dict | None:
+    """Look up a ROUTE field, honoring X3D event-model aliases.
+
+    Every inputOutput field X implicitly provides an inputOnly set_X and an
+    outputOnly X_changed (ISO 19775-1 clause 4.4.2.2), so ROUTEs may name
+    either form. direction is "in" for toField, "out" for fromField.
+    """
+    info = fields.get(field_name)
+    if info is not None:
+        return info
+    if direction == "in" and field_name.startswith("set_"):
+        base = fields.get(field_name[len("set_"):])
+        if base is not None and base.get("accessType") == "inputOutput":
+            return base
+    if direction == "out" and field_name.endswith("_changed"):
+        base = fields.get(field_name[: -len("_changed")])
+        if base is not None and base.get("accessType") == "inputOutput":
+            return base
+    return None
 
 
 def _check_route_validity(scene: etree._Element) -> list[Diagnostic]:
@@ -239,7 +264,7 @@ def _check_route_validity(scene: etree._Element) -> list[Diagnostic]:
         from_fields = {f["name"]: f for f in nodes.get(from_type, {}).get("fields", [])}
         to_fields = {f["name"]: f for f in nodes.get(to_type, {}).get("fields", [])}
 
-        from_field_info = from_fields.get(from_field)
+        from_field_info = _resolve_route_field(from_fields, from_field, "out")
         if from_field_info is None:
             diagnostics.append(Diagnostic(
                 level="error",
@@ -249,7 +274,7 @@ def _check_route_validity(scene: etree._Element) -> list[Diagnostic]:
             ))
             continue
 
-        to_field_info = to_fields.get(to_field)
+        to_field_info = _resolve_route_field(to_fields, to_field, "in")
         if to_field_info is None:
             diagnostics.append(Diagnostic(
                 level="error",
