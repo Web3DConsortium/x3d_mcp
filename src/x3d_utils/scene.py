@@ -24,6 +24,7 @@ class SceneManager:
         self._id_to_def: dict[str, str] = {}
         self._children: dict[str, list[str]] = {}
         self._parent: dict[str, str] = {}
+        self._container_field: dict[str, str] = {}   # explicit per-node overrides
         self._routes: list[dict] = []
         self._metas: list[dict] = []
         self._profile = "Interchange"
@@ -57,10 +58,30 @@ class SceneManager:
 
         setattr(node, field_name, value)
 
-    def add_child(self, parent_id: str, child_id: str) -> None:
-        """Add a child node to a parent node."""
+    def add_child(self, parent_id: str, child_id: str,
+                  container_field: str | None = None) -> None:
+        """Add a child node to a parent node.
+
+        container_field selects which of the parent's fields the child goes into.
+        When omitted, the child's *default* containerField is used. Pass it
+        explicitly for non-default placement -- e.g. a texture into a
+        PhysicalMaterial ('baseTexture'), or an HAnim skeleton root ('skeleton').
+        Placement is materialised at serialization time (see _collect_tree).
+        """
         parent = self._get_node(parent_id)
-        child = self._get_node(child_id)
+        self._get_node(child_id)
+
+        if container_field:
+            pfields = {f["name"]: f
+                       for f in self._uom.get_node_fields(type(parent).__name__)}
+            f = pfields.get(container_field)
+            if f is None:
+                raise SceneError(
+                    f"{type(parent).__name__} has no field '{container_field}'")
+            if f.get("type") not in ("SFNode", "MFNode"):
+                raise SceneError(
+                    f"{type(parent).__name__}.{container_field} is not a node container")
+            self._container_field[child_id] = container_field
 
         if child_id in self._parent:
             old_parent = self._parent[child_id]
@@ -69,17 +90,16 @@ class SceneManager:
         self._children[parent_id].append(child_id)
         self._parent[child_id] = parent_id
 
-        child_type = type(child).__name__
-        container_field = self._uom.get_container_field(child_type)
+    def _effective_cf(self, node_id: str) -> str | None:
+        """The containerField a child will use: explicit override, else default."""
+        return self._container_field.get(node_id) or \
+            self._uom.get_container_field(type(self._nodes[node_id]).__name__)
 
-        if container_field and container_field == "children":
-            if hasattr(parent, "children"):
-                parent.children = [
-                    self._nodes[cid] for cid in self._children[parent_id]
-                    if self._uom.get_container_field(type(self._nodes[cid]).__name__) == "children"
-                ]
-        elif container_field:
-            setattr(parent, container_field, child)
+    def _field_is_mfnode(self, parent_type: str, field_name: str) -> bool:
+        for f in self._uom.get_node_fields(parent_type):
+            if f["name"] == field_name:
+                return f.get("type") == "MFNode"
+        return False
 
     def def_node(self, node_id: str, def_name: str) -> None:
         """Assign a DEF name to a node."""
@@ -148,6 +168,7 @@ class SceneManager:
             del self._def_to_id[def_name]
             del self._id_to_def[node_id]
 
+        self._container_field.pop(node_id, None)
         del self._nodes[node_id]
         del self._children[node_id]
 
@@ -193,33 +214,36 @@ class SceneManager:
         child_ids = self._children.get(node_id, [])
 
         if child_ids:
-            children_list = []
-            non_children = []
+            # group fully-assembled child subtrees by their (effective) containerField
+            groups: dict[str, list] = {}
             for cid in child_ids:
-                child = self._nodes[cid]
-                child_type = type(child).__name__
-                cf = self._uom.get_container_field(child_type)
-                if cf == "children":
-                    sub = []
-                    self._collect_tree(cid, sub)
-                    children_list.extend(sub)
+                cf = self._effective_cf(cid)
+                if not cf:
+                    continue
+                sub: list = []
+                self._collect_tree(cid, sub)
+                if sub:
+                    groups.setdefault(cf, []).append(sub[0])
+            for cf, child_nodes in groups.items():
+                if self._field_is_mfnode(node_type, cf):
+                    setattr(node, cf, child_nodes)         # MFNode -> list
                 else:
-                    non_children.append((cid, cf))
-
-            if hasattr(node, "children") and children_list:
-                node.children = children_list
-            for cid, cf in non_children:
-                if cf:
-                    child_sub = []
-                    self._collect_tree(cid, child_sub)
-                    if child_sub:
-                        setattr(node, cf, child_sub[0])
+                    setattr(node, cf, child_nodes[0])      # SFNode -> single
 
         out.append(node)
 
     def to_xml(self) -> str:
-        """Serialize scene to X3D XML encoding."""
-        return self.get_model().XML()
+        """Serialize scene to X3D XML encoding.
+
+        x3d.py omits containerField, so non-default placements (a texture in a
+        PhysicalMaterial slot, an HAnim skeleton root, skinCoord, ...) would
+        serialize ambiguously. Pipe through the containerField auto-fixer so the
+        emitted document is always conformant.
+        """
+        from validation.autofix import autofix_containerfields
+        raw = self.get_model().XML()
+        res = autofix_containerfields(raw)
+        return res["fixed"] if res.get("changes") else raw   # only re-emit if fixed
 
     def to_json(self) -> str:
         """Serialize scene to X3D JSON encoding."""

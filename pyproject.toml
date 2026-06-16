@@ -19,6 +19,11 @@ dependencies = [
 dev = [
     "pytest>=8.0",
 ]
+# render_image renders scenes to PNG via headless Chromium. Heavy, so optional:
+#   pip install 'x3d-mcp[render]' && python -m playwright install chromium
+render = [
+    "playwright>=1.40",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
