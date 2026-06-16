@@ -6,7 +6,7 @@ over the X3D scene graph.
 
 from mcp.server.fastmcp import FastMCP
 
-from x3d_utils.scene import SceneManager
+from x3d_utils.scene import SceneManager, SceneError
 
 
 _scene = SceneManager()
@@ -42,14 +42,22 @@ def register(mcp: FastMCP):
         return f"Set {field_name} on {node_id}"
 
     @mcp.tool()
-    def add_child(parent_id: str, child_id: str) -> str:
+    def add_child(parent_id: str, child_id: str, container_field: str = "") -> str:
         """Add a child node to a parent node in the scene graph.
 
         Args:
             parent_id: The parent node tracking ID.
             child_id: The child node tracking ID.
+            container_field: Which parent field the child goes into. Leave empty to
+                use the child's default containerField; set it for non-default
+                placement, e.g. 'baseTexture' for a texture under a PhysicalMaterial,
+                or 'skeleton' for an HAnim root joint. (describe_node shows a node's
+                fields and which child types each accepts.)
         """
-        _scene.add_child(parent_id, child_id)
+        try:
+            _scene.add_child(parent_id, child_id, container_field or None)
+        except SceneError as exc:
+            return f"Error: {exc}"
         return f"Added {child_id} as child of {parent_id}"
 
     @mcp.tool()
