@@ -196,10 +196,58 @@ def _check_empty_groups(scene: etree._Element) -> list[Diagnostic]:
     return diagnostics
 
 
+def _script_fields(el: etree._Element) -> dict:
+    """A Script's interface is user-declared via <field> children (name/type/
+    accessType), not in X3DUOM. Extract it so ROUTEs to/from Script fields validate."""
+    out: dict[str, dict] = {}
+    for child in el:
+        if _local_tag(child) == "field" and child.get("name"):
+            out[child.get("name")] = {"name": child.get("name"),
+                                      "type": child.get("type", ""),
+                                      "accessType": child.get("accessType", "")}
+    return out
+
+
+def _proto_interfaces(scene: etree._Element) -> dict:
+    """{protoName: {field: info}} from ProtoDeclare/ExternProtoDeclare. A
+    ProtoInstance exposes exactly its declared interface, which X3DUOM cannot know."""
+    out: dict[str, dict] = {}
+    for el in scene.iter():
+        tag, name = _local_tag(el), el.get("name")
+        if not name:
+            continue
+        if tag == "ProtoDeclare":
+            fields: dict[str, dict] = {}
+            for sub in el:
+                if _local_tag(sub) == "ProtoInterface":
+                    for f in sub:
+                        if _local_tag(f) == "field" and f.get("name"):
+                            fields[f.get("name")] = {"name": f.get("name"),
+                                "type": f.get("type", ""), "accessType": f.get("accessType", "")}
+            out[name] = fields
+        elif tag == "ExternProtoDeclare":
+            out[name] = {f.get("name"): {"name": f.get("name"), "type": f.get("type", ""),
+                                         "accessType": f.get("accessType", "")}
+                         for f in el if _local_tag(f) == "field" and f.get("name")}
+    return out
+
+
+def _endpoint_fields(el: etree._Element, tag: str, nodes: dict, protos: dict) -> dict:
+    """Resolve a ROUTE endpoint's fields, honoring the DYNAMIC interfaces X3DUOM
+    misses: a Script's declared <field>s and a ProtoInstance's interface."""
+    fields = {f["name"]: f for f in nodes.get(tag, {}).get("fields", [])}
+    if tag == "Script":
+        fields.update(_script_fields(el))     # declared fields augment the built-ins
+    elif tag in protos:
+        fields = {**protos[tag], **fields}     # a proto instance == its interface
+    return fields
+
+
 def _check_route_validity(scene: etree._Element) -> list[Diagnostic]:
     diagnostics: list[Diagnostic] = []
     uom = get_x3duom()
     nodes = uom.get_concrete_nodes()
+    proto_ifaces = _proto_interfaces(scene)
 
     def_map: dict[str, tuple[etree._Element, str]] = {}
     for el in scene.iter():
@@ -233,11 +281,11 @@ def _check_route_validity(scene: etree._Element) -> list[Diagnostic]:
             ))
             continue
 
-        _, from_type = def_map[from_node]
-        _, to_type = def_map[to_node]
+        from_el, from_type = def_map[from_node]
+        to_el, to_type = def_map[to_node]
 
-        from_fields = {f["name"]: f for f in nodes.get(from_type, {}).get("fields", [])}
-        to_fields = {f["name"]: f for f in nodes.get(to_type, {}).get("fields", [])}
+        from_fields = _endpoint_fields(from_el, from_type, nodes, proto_ifaces)
+        to_fields = _endpoint_fields(to_el, to_type, nodes, proto_ifaces)
 
         from_field_info = from_fields.get(from_field)
         if from_field_info is None:
