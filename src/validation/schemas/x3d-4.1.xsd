@@ -632,6 +632,33 @@ Open-source license:
       <xs:pattern value="\s*((([+-]?((0|[1-9][0-9]*)(\.[0-9]*)?|\.[0-9]+)([Ee][+-]?[0-9]+)?)\s+){3}([+-]?((0|[1-9][0-9]*)(\.[0-9]*)?|\.[0-9]+)([Ee][+-]?[0-9]+)?)\s*,?\s*)*"/>
     </xs:restriction>
   </xs:simpleType>
+  <xs:simpleType name="SFQuaternion">
+    <xs:annotation>
+      <xs:appinfo>
+        <xs:attribute name="defaultValue" type="SFVec4d" default="0.0 0.0 0.0 0.0"/>
+        SFQuaternion is a 4-tuple set of double-precision floating-point values, specifying a 3D homogeneous vector.
+        Warning: comma characters within singleton values do not pass strict XML validation.
+      </xs:appinfo>
+      <xs:documentation source="https://www.web3d.org/specifications/X3Dv4Draft/ISO-IEC19775-1v4.1-CD/Part01/fieldTypes.html#SFQuaternionAndMFQuaternion"/>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:whiteSpace value="collapse"/>
+      <xs:pattern value="\s*(([+-]?((0|[1-9][0-9]*)(\.[0-9]*)?|\.[0-9]+)([Ee][+-]?[0-9]+)?)\s+){3}([+-]?((0|[1-9][0-9]*)(\.[0-9]*)?|\.[0-9]+)([Ee][+-]?[0-9]+)?)\s*"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="MFQuaternion">
+    <xs:annotation>
+      <xs:appinfo>
+        <xs:attribute name="defaultValue" type="MFQuaternion" default=""/>
+        MFQuaternion is zero or more SFQuaternion values. Individual singleton SFQuaternion array values are optionally separated by commas in XML syntax.
+      </xs:appinfo>
+      <xs:documentation source="https://www.web3d.org/specifications/X3Dv4Draft/ISO-IEC19775-1v4.1-CD/Part01/fieldTypes.html#SFQuaternionAndMFQuaternion"/>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:whiteSpace value="collapse"/>
+      <xs:pattern value="\s*((([+-]?((0|[1-9][0-9]*)(\.[0-9]*)?|\.[0-9]+)([Ee][+-]?[0-9]+)?)\s+){3}([+-]?((0|[1-9][0-9]*)(\.[0-9]*)?|\.[0-9]+)([Ee][+-]?[0-9]+)?)\s*,?\s*)*"/>
+    </xs:restriction>
+  </xs:simpleType>
   <xs:simpleType name="SFMatrix3f">
     <xs:annotation>
       <xs:appinfo>
@@ -1753,6 +1780,29 @@ Open-source license:
       </xs:enumeration>
     </xs:restriction>
   </xs:simpleType>
+  <xs:simpleType name="colorSpaceChoices">
+    <xs:annotation>
+      <xs:appinfo>
+        Permitted values for GaussianSplats colorSpace field, indicating color space of the reconstructed color values.
+        This list is bounded, no additional values are allowed.
+      </xs:appinfo>
+      <xs:documentation source="https://www.web3d.org/specifications/X3Dv4Draft/ISO-IEC19775-1v4.1-CD/Part01/components/GaussianSplats.html#GaussianSplats"/>
+    </xs:annotation>
+    <xs:restriction base="SFString">
+      <xs:enumeration value="SRGB_REC709_DISPLAY">
+        <xs:annotation>
+          <xs:appinfo>color space of the reconstructed color values</xs:appinfo>
+          <xs:documentation source="https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_gaussian_splatting/README.md#color-space"/>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="LIN_REC709_DISPLAY">
+        <xs:annotation>
+          <xs:appinfo>color space of the reconstructed color values</xs:appinfo>
+          <xs:documentation source="https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_gaussian_splatting/README.md#color-space"/>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
   <xs:simpleType name="alphaModeChoices">
     <xs:annotation>
       <xs:appinfo>
@@ -1801,7 +1851,7 @@ Open-source license:
           <xs:appinfo>The system will normally calculate the friction direction vector that is perpendicular to the contact normal. This setting indicates that the user-supplied value in this contact should be used.</xs:appinfo>
         </xs:annotation>
       </xs:enumeration>
-      <xs:enumeration value='"FRICTION_COEFFICIENT-2"'>
+      <xs:enumeration value='"FRICTION_COEFFICIENT_2"'>
         <xs:annotation>
           <xs:appinfo>Apply frictionCoefficients values</xs:appinfo>
         </xs:annotation>
@@ -1816,22 +1866,22 @@ Open-source license:
           <xs:appinfo>Apply softnessConstantForceMix value</xs:appinfo>
         </xs:annotation>
       </xs:enumeration>
-      <xs:enumeration value='"SPEED-1"'>
+      <xs:enumeration value='"SPEED_1"'>
         <xs:annotation>
           <xs:appinfo>Apply first component of surfaceSpeed array</xs:appinfo>
         </xs:annotation>
       </xs:enumeration>
-      <xs:enumeration value='"SPEED-2"'>
+      <xs:enumeration value='"SPEED_2"'>
         <xs:annotation>
           <xs:appinfo>Apply second component of surfaceSpeed array</xs:appinfo>
         </xs:annotation>
       </xs:enumeration>
-      <xs:enumeration value='"SLIP-1"'>
+      <xs:enumeration value='"SLIP_1"'>
         <xs:annotation>
           <xs:appinfo>Apply first component of slipFactors array</xs:appinfo>
         </xs:annotation>
       </xs:enumeration>
-      <xs:enumeration value='"SLIP-2"'>
+      <xs:enumeration value='"SLIP_2"'>
         <xs:annotation>
           <xs:appinfo>Apply second component of slipFactors array</xs:appinfo>
         </xs:annotation>
@@ -2100,6 +2150,15 @@ Open-source license:
             The Follower nodes (Chasers and Dampers) support dynamic creation of smooth parameter transitions at run time.
           </xs:appinfo>
           <xs:documentation source="https://www.web3d.org/specifications/X3Dv4Draft/ISO-IEC19775-1v4.1-CD/Part01/components/followers.html"/>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="GaussianSplats">
+        <xs:annotation>
+          <xs:appinfo>
+            The GaussianSplats component supports real-time radiance field rendering, based on volume rendering techniques that 
+            directly renders specially prepared volume data without converting into surface or line primitives.
+          </xs:appinfo>
+          <xs:documentation source="https://www.web3d.org/specifications/X3Dv4Draft/ISO-IEC19775-1v4.1-CD/Part01/components/gaussianSplats.html"/>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="Geometry2D">
@@ -2583,6 +2642,24 @@ Open-source license:
       <xs:enumeration value="value">
         <xs:annotation>
           <xs:appinfo>parent node is MetadataSet, this node is providing information as part of a MetadataSet collection.</xs:appinfo>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="containerFieldChoicesNavigationInfo">
+    <xs:annotation>
+      <xs:appinfo>containerFieldChoicesNavigationInfo lists the allowed containerField enumeration values for NavigationInfo nodes: "navigationInfo" ifsupporting a parent X3DViewpointNode, otherwise default "children".</xs:appinfo>
+      <xs:documentation source="https://www.web3d.org/x3d/content/examples/X3dSceneAuthoringHints.html#containerField"/>
+    </xs:annotation>
+    <xs:restriction base="xs:NMTOKEN">
+      <xs:enumeration value="children">
+        <xs:annotation>
+          <xs:appinfo>this node provides navigation information for its parent node.</xs:appinfo>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="navigationInfo">
+        <xs:annotation>
+          <xs:appinfo>this node provides navigation information for its parent X3DViewpointNode.</xs:appinfo>
         </xs:annotation>
       </xs:enumeration>
     </xs:restriction>
@@ -3141,6 +3218,16 @@ Open-source license:
       <xs:enumeration value="MFNode">
         <xs:annotation>
           <xs:appinfo>Multiple Field (list) nodes</xs:appinfo>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="SFQuaternion">
+        <xs:annotation>
+          <xs:appinfo>Single Field (singleton) quaternion value</xs:appinfo>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="MFQuaternion">
+        <xs:annotation>
+          <xs:appinfo>Multiple Field (list) quaternion values</xs:appinfo>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="SFRotation">
@@ -5215,6 +5302,7 @@ Open-source license:
       <xs:enumeration value="rootUrl"/>
       <xs:enumeration value="rotateYUp"/>
       <xs:enumeration value="size"/>
+      <xs:enumeration value="smooth"/>
       <xs:enumeration value="sortOrder"/>
       <xs:enumeration value="spatialize"/>
       <xs:enumeration value="specific"/>
@@ -5435,6 +5523,7 @@ Open-source license:
       <xs:enumeration value="backUrl"/>
       <xs:enumeration value="baseColor"/>
       <xs:enumeration value="baseTextureMapping"/>
+      <xs:enumeration value="bboxDisplay"/>
       <xs:enumeration value="beamWidth"/>
       <xs:enumeration value="bottom"/>
       <xs:enumeration value="bottomTexture"/>
@@ -5459,9 +5548,10 @@ Open-source license:
       <xs:enumeration value="channelInterpretation"/>
       <xs:enumeration value="channelSelection"/>
       <xs:enumeration value="channelsEnabled"/>
-      <xs:enumeration value="gain"/>
       <xs:enumeration value="collisionType"/>
       <xs:enumeration value="color"/>
+      <xs:enumeration value="colorDepth"/>
+      <xs:enumeration value="colorSpace"/>
       <xs:enumeration value="colorSteps"/>
       <xs:enumeration value="coneInnerAngle"/>
       <xs:enumeration value="coneOuterAngle"/>
@@ -5484,6 +5574,7 @@ Open-source license:
       <xs:enumeration value="delayTime"/>
       <xs:enumeration value="deletionAllowed"/>
       <xs:enumeration value="depth"/>
+      <xs:enumeration value="depthMap"/>
       <xs:enumeration value="description"/>
       <xs:enumeration value="desiredAngularVelocity1"/>
       <xs:enumeration value="desiredAngularVelocity2"/>
@@ -5502,8 +5593,6 @@ Open-source license:
       <xs:enumeration value="disableTime"/>
       <xs:enumeration value="diskAngle"/>
       <xs:enumeration value="displacements"/>
-      <xs:enumeration value="bboxDisplay"/>
-      <xs:enumeration value="detune"/>
       <xs:enumeration value="displayed"/>
       <xs:enumeration value="distanceModel"/>
       <xs:enumeration value="easeInEaseOut"/>
@@ -5629,6 +5718,7 @@ Open-source license:
       <xs:enumeration value="maxDistance"/>
       <xs:enumeration value="maxExtent"/>
       <xs:enumeration value="maxFront"/>
+      <xs:enumeration value="maxNumberFrames"/>
       <xs:enumeration value="maxParticles"/>
       <xs:enumeration value="maxPosition"/>
       <xs:enumeration value="maxSeparation"/>
@@ -5678,10 +5768,12 @@ Open-source license:
       <xs:enumeration value="offset"/>
       <xs:enumeration value="offsetUnits"/>
       <xs:enumeration value="on"/>
+      <xs:enumeration value="opacities"/>
       <xs:enumeration value="opacityFactor"/>
       <xs:enumeration value="optionsImag"/>
       <xs:enumeration value="optionsReal"/>
       <xs:enumeration value="orientation"/>
+      <xs:enumeration value="orientations"/>
       <xs:enumeration value="origin"/>
       <xs:enumeration value="orthogonalColor"/>
       <xs:enumeration value="oversample"/>
@@ -5695,12 +5787,14 @@ Open-source license:
       <xs:enumeration value="plane"/>
       <xs:enumeration value="playbackRate"/>
       <xs:enumeration value="point"/>
+      <xs:enumeration value="pointerEvents"/>
       <xs:enumeration value="pointSize"/>
       <xs:enumeration value="pointSizeScaleFactor"/>
       <xs:enumeration value="pointSizeMinValue"/>
       <xs:enumeration value="pointSizeMaxValue"/>
       <xs:enumeration value="port"/>
       <xs:enumeration value="position"/>
+      <xs:enumeration value="positions"/>
       <xs:enumeration value="power"/>
       <xs:enumeration value="preferAccuracy"/>
       <xs:enumeration value="priority"/>
@@ -5721,6 +5815,7 @@ Open-source license:
       <xs:enumeration value="refraction"/>
       <xs:enumeration value="relativeAntennaLocation"/>
       <xs:enumeration value="release"/>
+      <xs:enumeration value="replaceImage"/>
       <xs:enumeration value="retainedOpacity"/>
       <xs:enumeration value="retainUserOffsets"/>
       <xs:enumeration value="resumeTime"/>
@@ -5733,6 +5828,7 @@ Open-source license:
       <xs:enumeration value="sampleRate"/>
       <xs:enumeration value="samples"/>
       <xs:enumeration value="scale"/>
+      <xs:enumeration value="scales"/>
       <xs:enumeration value="scaleMode"/>
       <xs:enumeration value="scaleOrientation"/>
       <xs:enumeration value="segmentEnabled"/>
@@ -5745,6 +5841,7 @@ Open-source license:
       <xs:enumeration value="silhouetteBoundaryOpacity"/>
       <xs:enumeration value="silhouetteRetainedOpacity"/>
       <xs:enumeration value="silhouetteSharpness"/>
+      <xs:enumeration value="singleFrame"/>
       <xs:enumeration value="siteID"/>
       <xs:enumeration value="size"/>
       <xs:enumeration value="sizeUnits"/>
@@ -5766,6 +5863,22 @@ Open-source license:
       <xs:enumeration value="specularColor"/>
       <xs:enumeration value="specularTextureMapping"/>
       <xs:enumeration value="speed"/>
+      <xs:enumeration value="sphericalHarmonicsDegree0Coef0"/>
+      <xs:enumeration value="sphericalHarmonicsDegree1Coef0"/>
+      <xs:enumeration value="sphericalHarmonicsDegree1Coef1"/>
+      <xs:enumeration value="sphericalHarmonicsDegree1Coef2"/>
+      <xs:enumeration value="sphericalHarmonicsDegree2Coef0"/>
+      <xs:enumeration value="sphericalHarmonicsDegree2Coef1"/>
+      <xs:enumeration value="sphericalHarmonicsDegree2Coef2"/>
+      <xs:enumeration value="sphericalHarmonicsDegree2Coef3"/>
+      <xs:enumeration value="sphericalHarmonicsDegree2Coef4"/>
+      <xs:enumeration value="sphericalHarmonicsDegree3Coef0"/>
+      <xs:enumeration value="sphericalHarmonicsDegree3Coef1"/>
+      <xs:enumeration value="sphericalHarmonicsDegree3Coef2"/>
+      <xs:enumeration value="sphericalHarmonicsDegree3Coef3"/>
+      <xs:enumeration value="sphericalHarmonicsDegree3Coef4"/>
+      <xs:enumeration value="sphericalHarmonicsDegree3Coef5"/>
+      <xs:enumeration value="sphericalHarmonicsDegree3Coef6"/>
       <xs:enumeration value="startFrame"/>
       <xs:enumeration value="startTime"/>
       <xs:enumeration value="stiffness"/>
@@ -5824,6 +5937,7 @@ Open-source license:
       <xs:enumeration value="ulimit"/>
       <xs:enumeration value="upVector"/>
       <xs:enumeration value="update"/>
+      <xs:enumeration value="updateInterval"/>
       <xs:enumeration value="url"/>
       <xs:enumeration value="useFiniteRotation"/>
       <xs:enumeration value="useGeometry"/>
@@ -5850,6 +5964,7 @@ Open-source license:
       <xs:enumeration value="weightFunction2"/>
       <xs:enumeration value="whichChoice"/>
       <xs:enumeration value="whichGeometry"/>
+      <xs:enumeration value="width"/>
       <xs:enumeration value="writeInterval"/>
       <xs:enumeration value="yScale"/>
       <!--<xs:enumeration value="colorMode"/> originally proposed but not included in PointProperties -->
@@ -7169,6 +7284,30 @@ Open-source license:
       </xs:annotation>
     </xs:attribute>
   </xs:complexType>
+  <xs:complexType name="X3DUrlOutputObject" abstract="true">
+    <xs:annotation>
+      <xs:appinfo>
+        <xs:attribute name="isActive" type="SFBool" fixed="outputOnlyField"/>
+        <xs:attribute name="componentName" type="componentNameChoices" fixed="Networking"/>
+        <xs:attribute name="componentLevel" type="xs:positiveInteger" fixed="4"/>
+        X3DUrlOutputObject indicates that a node publish data on the local file system or to a network address.
+      </xs:appinfo>
+      <!-- Note that X3DUrlOutputObject is a second interface and thus the following fields are typically listed in implementing nodes so that validation works -->
+      <xs:documentation source="https://www.web3d.org/specifications/X3Dv4Draft/ISO-IEC19775-1v4.1-CD/Part01/components/networking.html#X3DUrlOutputObject"/>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="X3DNetworkSensorNode">
+        <xs:attribute name="url" type="MFString">
+          <xs:annotation>
+            <xs:appinfo>
+              <xs:attribute name="componentName" type="componentNameChoices" fixed="Networking"/>
+              <xs:attribute name="componentLevel" type="xs:positiveInteger" fixed="4"/>
+            </xs:appinfo>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
   <xs:complexType name="X3DVertexAttributeNode" abstract="true">
     <xs:annotation>
       <xs:appinfo>
@@ -7610,6 +7749,8 @@ Open-source license:
       <xs:element ref="StreamAudioDestination"/>
       <xs:element ref="StreamAudioSource"/>
       <xs:element ref="WaveShaper"/>
+      <!-- X3D4 4.1 GaussianSplats Component -->
+      <xs:element ref="GaussianSplats"/>
     </xs:choice>
   </xs:group>
   <xs:group name="ChildContentModelDIS">
@@ -9893,6 +10034,7 @@ Open-source license:
       <xs:element ref="MovieTexture"/>
       <xs:element ref="MultiTexture"/>
       <xs:element ref="PixelTexture"/>
+      <xs:element ref="RenderedTexture"/>
       <xs:element ref="ProtoInstance">
         <xs:annotation>
           <xs:documentation>Appropriately typed substitution node</xs:documentation>
@@ -11040,8 +11182,6 @@ Open-source license:
   <xs:element name="FontLibrary">
     <xs:annotation>
       <xs:appinfo>
-        <!-- optional values, can be extended -->
-        <xs:attribute name="family" type="fontFamilyValues"/>
         <xs:attribute name="additionalInterface" type="xs:string" default="X3DUrlObject"/>
         <xs:attribute name="componentName" type="componentNameChoices" fixed="Text"/>
         <xs:attribute name="componentLevel" type="xs:positiveInteger" fixed="2"/>
@@ -11068,7 +11208,7 @@ Open-source license:
             </xs:simpleType>
           </xs:attribute>
           <xs:attribute name="description" type="SFString"/>
-          <xs:attribute name="family" type="MFString"/>
+          <xs:attribute name="family" type="SFString"/>
           <xs:attribute name="load" type="SFBool" default="true"/>
           <xs:attribute name="url" type="MFString">
             <xs:annotation>
@@ -11152,6 +11292,9 @@ Open-source license:
     <xs:annotation>
       <xs:appinfo>
         <xs:attribute name="additionalInterface" type="xs:string" default="X3DUrlObject"/>
+        <xs:attribute name="colorDepth" type="SFInt32" fixed="outputOnlyField"/>
+        <xs:attribute name="height" type="SFInt32" fixed="outputOnlyField"/>
+        <xs:attribute name="width" type="SFInt32" fixed="outputOnlyField"/>
         <xs:attribute name="componentName" type="componentNameChoices" fixed="Texturing"/>
         <xs:attribute name="componentLevel" type="xs:positiveInteger" fixed="1"/>
       </xs:appinfo>
@@ -11514,6 +11657,8 @@ Open-source license:
               </xs:restriction>
             </xs:simpleType>
           </xs:attribute>
+          <xs:attribute name="smooth" type="SFBool" default="true"/>
+          <xs:attribute name="solid"  type="SFBool" default="false"/>
           <xs:attribute name="url" type="MFString">
             <xs:annotation>
               <xs:appinfo>
@@ -11864,6 +12009,7 @@ Open-source license:
             <xs:element ref="ImageTexture"/>
             <xs:element ref="MovieTexture"/>
             <xs:element ref="PixelTexture"/>
+            <xs:element ref="RenderedTexture"/>
             <xs:element ref="ProtoInstance">
               <xs:annotation>
                 <xs:documentation>Appropriately typed substitution node</xs:documentation>
@@ -12170,6 +12316,10 @@ Open-source license:
             </xs:restriction>
           </xs:simpleType>
         </xs:attribute>
+        <xs:attribute name="colorDepth" type="SFInt32" fixed="outputOnlyField"/>
+        <xs:attribute name="hasSound" type="SFInt32" fixed="outputOnlyField"/>
+        <xs:attribute name="height" type="SFInt32" fixed="outputOnlyField"/>
+        <xs:attribute name="width" type="SFInt32" fixed="outputOnlyField"/>
         <xs:element name="textureProperties" type="SFNode" default="TextureProperties" fixed="initializeOnlyField"/>
         <xs:attribute name="additionalInterface" type="xs:string" default="X3DTexture2DNode"/>
         <xs:attribute name="additionalInterface" type="xs:string" default="X3DUrlObject"/>
@@ -12259,6 +12409,7 @@ Open-source license:
             <xs:element ref="ImageTexture"/>
             <xs:element ref="MovieTexture"/>
             <xs:element ref="PixelTexture"/>
+            <xs:element ref="RenderedTexture"/>
             <xs:element ref="ComposedCubeMapTexture"/>
             <xs:element ref="GeneratedCubeMapTexture"/>
             <xs:element ref="ImageCubeMapTexture"/>
@@ -12419,7 +12570,7 @@ Open-source license:
               </xs:restriction>
             </xs:simpleType>
           </xs:attribute>
-          <xs:attribute name="containerField" type="xs:NMTOKEN" default="children"/>
+          <xs:attribute name="containerField" type="containerFieldChoicesNavigationInfo" default="children"/>
         </xs:extension>
       </xs:complexContent>
     </xs:complexType>
@@ -12522,6 +12673,40 @@ Open-source license:
       <xs:complexContent>
         <xs:extension base="X3DTexture2DNode">
           <xs:attribute name="image" type="SFImage" default="0 0 0"/>
+          <xs:attribute name="containerField" type="containerFieldChoicesX3DTexture2DNode" default="texture"/>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="RenderedTexture">
+    <xs:annotation>
+      <xs:appinfo>
+        <xs:attribute name="additionalInterface" type="xs:string" default="X3DUrlOutputObject"/>
+        <xs:attribute name="isActive" type="SFBool" fixed="outputOnlyField"/>
+        <xs:attribute name="componentName" type="componentNameChoices" fixed="Texturing"/>
+        <xs:attribute name="componentLevel" type="xs:positiveInteger" fixed="4"/>
+      </xs:appinfo>
+      <xs:documentation source="https://www.web3d.org/specifications/X3Dv4Draft/ISO-IEC19775-1v4.1-CD/Part01/components/texturing.html#RenderedTexture"/>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="X3DTexture2DNode">
+          <xs:attribute name="colorDepth" type="SFInt32" default="4"/>
+          <xs:attribute name="depthMap" type="SFBool" default="false"/>
+          <xs:attribute name="height" type="SFInt32" default="128"/>
+          <xs:attribute name="maxNumberFrames" type="SFInt32" default="1000"/>
+          <xs:attribute name="replaceImage" type="SFBool" default="true"/>
+          <xs:attribute name="singleFrame" type="SFBool" default="true"/>
+          <xs:attribute name="updateInterval" type="SFTime" default="0.1"/>
+          <xs:attribute name="url" type="MFString">
+            <xs:annotation>
+              <xs:appinfo>
+                <xs:attribute name="componentName" type="componentNameChoices" fixed="Networking"/>
+                <xs:attribute name="componentLevel" type="xs:positiveInteger" fixed="4"/>
+              </xs:appinfo>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="width" type="SFInt32" default="128"/>
           <xs:attribute name="containerField" type="containerFieldChoicesX3DTexture2DNode" default="texture"/>
         </xs:extension>
       </xs:complexContent>
@@ -13755,6 +13940,7 @@ Open-source license:
         <xs:extension base="X3DStatement">
           <xs:attribute name="localDEF" type="xs:IDREF" use="required"/>
           <xs:attribute name="AS" type="xs:NMTOKEN"/>
+          <xs:attribute name="description" type="SFString"/>
         </xs:extension>
       </xs:complexContent>
     </xs:complexType>
@@ -13775,6 +13961,7 @@ Open-source license:
           <xs:attribute name="inlineDEF" type="xs:IDREF" use="required"/>
           <xs:attribute name="importedDEF" type="xs:NMTOKEN" use="required"/>
           <xs:attribute name="AS" type="xs:ID"/>
+          <xs:attribute name="description" type="SFString"/>
         </xs:extension>
       </xs:complexContent>
     </xs:complexType>
@@ -20318,7 +20505,7 @@ Open-source license:
           </xs:attribute>
           <xs:attribute name="jointBindingPositions" type="MFVec3f"/>
           <xs:attribute name="jointBindingRotations" type="MFRotation"/>
-          <xs:attribute name="jointBindingScales" type="MFVec3f" default=""/>
+          <xs:attribute name="jointBindingScales" type="MFVec3f"/>
           <xs:attribute name="loa" type="loaType" default="-1"/>
           <xs:attribute name="motionsEnabled" type="MFBool"/>
           <xs:attribute name="name" type="xs:NMTOKEN">
@@ -21862,6 +22049,7 @@ Open-source license:
             <xs:choice minOccurs="1" maxOccurs="1">
               <xs:element ref="ImageTexture"/>
               <xs:element ref="PixelTexture"/>
+              <xs:element ref="RenderedTexture"/>
               <xs:element ref="MovieTexture"/>
               <xs:element ref="ProtoInstance">
                 <xs:annotation>
@@ -21992,8 +22180,9 @@ Open-source license:
               <xs:documentation>texture</xs:documentation>
             </xs:annotation>
             <xs:element ref="ImageTexture"/>
-            <xs:element ref="PixelTexture"/>
             <xs:element ref="MovieTexture"/>
+            <xs:element ref="PixelTexture"/>
+            <xs:element ref="RenderedTexture"/>
             <xs:element ref="ProtoInstance">
               <xs:annotation>
                 <xs:documentation>Appropriately typed substitution node</xs:documentation>
@@ -22009,6 +22198,10 @@ Open-source license:
     <xs:annotation>
       <xs:appinfo>
         <xs:attribute name="additionalInterface" type="xs:string" default="X3DUrlObject"/>
+        <xs:attribute name="colorDepth" type="SFInt32" fixed="outputOnlyField"/>
+        <xs:attribute name="depth" type="SFInt32" fixed="outputOnlyField"/>
+        <xs:attribute name="height" type="SFInt32" fixed="outputOnlyField"/>
+        <xs:attribute name="width" type="SFInt32" fixed="outputOnlyField"/>
         <xs:attribute name="componentName" type="componentNameChoices" fixed="Texturing3D"/>
         <xs:attribute name="componentLevel" type="xs:positiveInteger" fixed="2"/>
       </xs:appinfo>
@@ -25286,8 +25479,9 @@ Open-source license:
     <xs:choice>
       <!-- X3DTexture2DNode -->
       <xs:element ref="ImageTexture"/>
-      <xs:element ref="PixelTexture"/>
       <xs:element ref="MovieTexture"/>
+      <xs:element ref="PixelTexture"/>
+      <xs:element ref="RenderedTexture"/>
       <!-- X3DTextureNode -->
       <xs:element ref="MultiTexture"/>
       <!-- X3DTexture3DNode -->
@@ -25303,8 +25497,9 @@ Open-source license:
     </xs:annotation>
     <xs:choice>
       <xs:element ref="ImageTexture"/>
-      <xs:element ref="PixelTexture"/>
       <xs:element ref="MovieTexture"/>
+      <xs:element ref="PixelTexture"/>
+      <xs:element ref="RenderedTexture"/>
     </xs:choice>
   </xs:group>
   <xs:group name="Texture3DContentModel">
@@ -26005,6 +26200,7 @@ Open-source license:
           <xs:element ref="ImageTexture"/>
           <xs:element ref="MovieTexture"/>
           <xs:element ref="PixelTexture"/>
+          <xs:element ref="RenderedTexture"/>
           <xs:element ref="ProtoInstance">
             <xs:annotation>
               <xs:documentation>Appropriately typed substitution node</xs:documentation>
@@ -26132,6 +26328,7 @@ Open-source license:
             <xs:element ref="ImageTexture"/>
             <xs:element ref="MovieTexture"/>
             <xs:element ref="PixelTexture"/>
+            <xs:element ref="RenderedTexture"/>
             <xs:element ref="ProtoInstance">
               <xs:annotation>
                 <xs:documentation>Appropriately typed substitution node</xs:documentation>
@@ -26861,6 +27058,52 @@ Open-source license:
           <xs:attribute name="curve" type="MFFloat"/>
           <xs:attribute name="oversample" type="waveShaperOversampleChoices" default="NONE"/>
           <xs:attribute name="containerField" type="containerFieldChoicesAudioGraph" default="children"/>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <!--======================================================================-->
+  <!-- X3D4.1 GaussianSplats component -->
+  <xs:element name="GaussianSplats">
+    <xs:annotation>
+      <xs:appinfo>
+        <xs:attribute name="additionalInterface" type="xs:string" default="X3DBoundedObject"/>
+        <xs:attribute name="componentName" type="componentNameChoices" fixed="GaussianSplats"/>
+        <xs:attribute name="componentLevel" type="xs:positiveInteger" fixed="1"/>
+      </xs:appinfo>
+      <xs:documentation source="https://www.web3d.org/specifications/X3Dv4Draft/ISO-IEC19775-1v4.1-CD/Part01/components/gaussianSplats.html#GaussianSplats"/>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="X3DChildNode">
+          <xs:attribute name="castShadow" type="SFBool" default="true"/>
+          <xs:attribute name="containerField" type="xs:NMTOKEN" default="children"/>
+          <xs:attribute name="colorSpace" type="colorSpaceChoices" default="SRGB_REC709_DISPLAY"/>
+          <xs:attribute name="opacities" type="MFFloat"/>
+          <xs:attribute name="orientations" type="MFQuaternion"/>
+          <xs:attribute name="pointerEvents" type="SFBool" default="true"/>
+          <xs:attribute name="positions" type="MFVec3f"/>
+          <xs:attribute name="scales" type="MFVec3f"/>
+          <xs:attribute name="sphericalHarmonicsDegree0Coef0" type="MFVec3f"/>
+          <xs:attribute name="sphericalHarmonicsDegree1Coef0" type="MFVec3f"/>
+          <xs:attribute name="sphericalHarmonicsDegree1Coef1" type="MFVec3f"/>
+          <xs:attribute name="sphericalHarmonicsDegree1Coef2" type="MFVec3f"/>
+          <xs:attribute name="sphericalHarmonicsDegree2Coef0" type="MFVec3f"/>
+          <xs:attribute name="sphericalHarmonicsDegree2Coef1" type="MFVec3f"/>
+          <xs:attribute name="sphericalHarmonicsDegree2Coef2" type="MFVec3f"/>
+          <xs:attribute name="sphericalHarmonicsDegree2Coef3" type="MFVec3f"/>
+          <xs:attribute name="sphericalHarmonicsDegree2Coef4" type="MFVec3f"/>
+          <xs:attribute name="sphericalHarmonicsDegree3Coef0" type="MFVec3f"/>
+          <xs:attribute name="sphericalHarmonicsDegree3Coef1" type="MFVec3f"/>
+          <xs:attribute name="sphericalHarmonicsDegree3Coef2" type="MFVec3f"/>
+          <xs:attribute name="sphericalHarmonicsDegree3Coef3" type="MFVec3f"/>
+          <xs:attribute name="sphericalHarmonicsDegree3Coef4" type="MFVec3f"/>
+          <xs:attribute name="sphericalHarmonicsDegree3Coef5" type="MFVec3f"/>
+          <xs:attribute name="sphericalHarmonicsDegree3Coef6" type="MFVec3f"/>
+          <xs:attribute name="bboxCenter" type="SFVec3f" default="0 0 0"/>
+          <xs:attribute name="bboxSize" type="bboxSizeType" default="-1 -1 -1"/>
+          <xs:attribute name="bboxDisplay" type="SFBool" default="false"/>
+          <xs:attribute name="visible" type="SFBool" default="true"/>
         </xs:extension>
       </xs:complexContent>
     </xs:complexType>

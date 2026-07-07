@@ -16,7 +16,7 @@ def test_loads_x3duom():
 def test_concrete_nodes_count():
     uom = get_x3duom()
     nodes = uom.get_concrete_nodes()
-    assert len(nodes) == 265
+    assert len(nodes) == 267
 
 
 def test_box_node():
@@ -72,7 +72,7 @@ def test_get_node_fields_unknown():
 def test_components():
     uom = get_x3duom()
     components = uom.get_components()
-    assert len(components) == 36
+    assert len(components) == 37
     assert "Geometry3D" in components
     assert "Shape" in components
     assert "Grouping" in components
@@ -92,7 +92,7 @@ def test_profiles():
 def test_field_types():
     uom = get_x3duom()
     types = uom.get_field_types()
-    assert len(types) == 42
+    assert len(types) == 44
     assert "SFBool" in types
     assert types["SFBool"]["isArray"] is False
     assert types["MFFloat"]["isArray"] is True
