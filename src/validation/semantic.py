@@ -8,6 +8,7 @@ Adapted from semantic_check.py in https://github.com/niknarra/x3d-mcp by
 Nikhil Narra and Nicholas Polys (Virginia Tech / Web3D Consortium).
 """
 
+import re
 from dataclasses import dataclass
 from lxml import etree
 
@@ -178,11 +179,23 @@ def _check_shape_completeness(scene: etree._Element) -> list[Diagnostic]:
     return diagnostics
 
 
+# HAnim grouping nodes are meaningful even when childless: an HAnimJoint
+# defines an articulation center, and HAnimSegment/HAnimSite mark named body
+# locations -- LOA-3/LOA-4 skeletons legitimately have many empty leaf joints.
+_EMPTY_GROUP_EXEMPT = {"HAnimJoint", "HAnimSegment", "HAnimSite"}
+
+
 def _check_empty_groups(scene: etree._Element) -> list[Diagnostic]:
     diagnostics: list[Diagnostic] = []
     for tag in _GROUPING_NODES:
+        if tag in _EMPTY_GROUP_EXEMPT:
+            continue
         for el in scene.iter(tag):
             if len(el) == 0:
+                if el.get("USE"):
+                    # A USE reference reuses the DEF'd node wholesale; it is
+                    # intentionally childless and not an empty group.
+                    continue
                 def_name = el.get("DEF", "")
                 label = f" (DEF={def_name!r})" if def_name else ""
                 diagnostics.append(Diagnostic(
@@ -194,6 +207,27 @@ def _check_empty_groups(scene: etree._Element) -> list[Diagnostic]:
                     def_name=def_name,
                 ))
     return diagnostics
+
+
+def _resolve_route_field(fields: dict, field_name: str, direction: str) -> dict | None:
+    """Look up a ROUTE field, honoring X3D event-model aliases.
+
+    Every inputOutput field X implicitly provides an inputOnly set_X and an
+    outputOnly X_changed (ISO 19775-1 clause 4.4.2.2), so ROUTEs may name
+    either form. direction is "in" for toField, "out" for fromField.
+    """
+    info = fields.get(field_name)
+    if info is not None:
+        return info
+    if direction == "in" and field_name.startswith("set_"):
+        base = fields.get(field_name[len("set_"):])
+        if base is not None and base.get("accessType") == "inputOutput":
+            return base
+    if direction == "out" and field_name.endswith("_changed"):
+        base = fields.get(field_name[: -len("_changed")])
+        if base is not None and base.get("accessType") == "inputOutput":
+            return base
+    return None
 
 
 def _check_route_validity(scene: etree._Element) -> list[Diagnostic]:
@@ -239,7 +273,7 @@ def _check_route_validity(scene: etree._Element) -> list[Diagnostic]:
         from_fields = {f["name"]: f for f in nodes.get(from_type, {}).get("fields", [])}
         to_fields = {f["name"]: f for f in nodes.get(to_type, {}).get("fields", [])}
 
-        from_field_info = from_fields.get(from_field)
+        from_field_info = _resolve_route_field(from_fields, from_field, "out")
         if from_field_info is None:
             diagnostics.append(Diagnostic(
                 level="error",
@@ -249,7 +283,7 @@ def _check_route_validity(scene: etree._Element) -> list[Diagnostic]:
             ))
             continue
 
-        to_field_info = to_fields.get(to_field)
+        to_field_info = _resolve_route_field(to_fields, to_field, "in")
         if to_field_info is None:
             diagnostics.append(Diagnostic(
                 level="error",
@@ -293,6 +327,184 @@ def _check_route_validity(scene: etree._Element) -> list[Diagnostic]:
     return diagnostics
 
 
+_NODE_FIELD_TYPES = {"SFNode", "MFNode"}
+
+
+def _type_ancestry(typename: str, nodes: dict, abstracts: dict) -> set[str]:
+    """Return {typename} plus every abstract base it inherits from."""
+    chain = {typename}
+    cur = nodes.get(typename) or abstracts.get(typename)
+    while cur:
+        base = cur.get("baseType")
+        if not base or base in chain:
+            break
+        chain.add(base)
+        cur = nodes.get(base) or abstracts.get(base)
+    return chain
+
+
+def _node_field_map(typename: str, nodes: dict) -> dict:
+    return {f["name"]: f for f in nodes.get(typename, {}).get("fields", [])}
+
+
+def _field_accepts(field: dict, ancestry: set[str]) -> bool:
+    """True if a parent field can hold a node whose type ancestry is given."""
+    if field.get("type") not in _NODE_FIELD_TYPES:
+        return False
+    acc = field.get("acceptableNodeTypes")
+    if not acc:
+        return True                      # unspecified -> be lenient
+    # acceptableNodeTypes is '|'-separated (some sources space-separate); accept both.
+    return bool(ancestry & set(re.split(r"[|\s]+", acc.strip())))
+
+
+def _check_containerfield(scene: etree._Element) -> list[Diagnostic]:
+    """Verify every child node's containerField names a parent field that accepts it.
+
+    The single most common silent failure: a node's *default* containerField does
+    not fit the parent it's placed under, so a conforming viewer files it in the
+    wrong field (or drops it). Examples this catches: an ImageTexture (default
+    'texture') inside a PhysicalMaterial (needs baseTexture/normalTexture/...), or
+    an HAnimJoint (default 'children') used as an HAnimHumanoid skeleton root
+    (needs 'skeleton'). X3D requires an explicit containerField in these cases.
+    """
+    diagnostics: list[Diagnostic] = []
+    uom = get_x3duom()
+    nodes = uom.get_concrete_nodes()
+    abstracts = uom.get_abstract_types()
+
+    for parent in scene.iter():
+        ptag = _local_tag(parent)
+        if ptag not in nodes:
+            continue
+        pfields = _node_field_map(ptag, nodes)
+        for child in parent:
+            ctag = _local_tag(child)
+            if ctag not in nodes:        # skip ROUTE/field/IS/meta/comments
+                continue
+            cf = child.get("containerField") or nodes[ctag]["containerField"]
+            if not cf:
+                continue
+            anc = _type_ancestry(ctag, nodes, abstracts)
+            explicit = child.get("containerField") is not None
+            candidates = [n for n, f in pfields.items() if _field_accepts(f, anc)]
+            suggest = ""
+            if candidates:
+                head = f"containerField='{candidates[0]}'"
+                more = f" (or {', '.join(candidates[1:])})" if len(candidates) > 1 else ""
+                suggest = f" Use {head}{more} to place a {ctag} here."
+            field = pfields.get(cf)
+            hint = "" if explicit else (
+                f" {ctag}'s default containerField is '{cf}', which does not fit a {ptag} "
+                f"-- an explicit containerField is required here.")
+            if field is None:
+                diagnostics.append(Diagnostic(
+                    level="error", check="containerfield-unknown",
+                    message=f"{ctag} containerField='{cf}' but {ptag} has no field "
+                            f"named '{cf}'.{hint}{suggest}",
+                    node_tag=ctag, def_name=child.get("DEF", "")))
+            elif field.get("type") not in _NODE_FIELD_TYPES:
+                diagnostics.append(Diagnostic(
+                    level="error", check="containerfield-not-node",
+                    message=f"{ctag} containerField='{cf}' targets {ptag}.{cf}, which is a "
+                            f"{field.get('type')} value field, not a node container.{suggest}",
+                    node_tag=ctag, def_name=child.get("DEF", "")))
+            elif not _field_accepts(field, anc):
+                acc = field.get("acceptableNodeTypes", "")
+                alt = [c for c in candidates if c != cf]
+                s2 = (f" Use containerField='{alt[0]}'." if alt else "")
+                diagnostics.append(Diagnostic(
+                    level="error", check="containerfield-type-mismatch",
+                    message=f"{ptag}.{cf} does not accept a {ctag} (accepts: {acc}).{s2}",
+                    node_tag=ctag, def_name=child.get("DEF", "")))
+    return diagnostics
+
+
+def _check_use_before_def(scene: etree._Element) -> list[Diagnostic]:
+    """A USE must reference a DEF that PRECEDES it in document order (ISO 19775-1).
+
+    The existing DEF/USE check confirms the DEF exists somewhere; this catches the
+    distinct failure where the DEF is authored *after* the USE -- valid-looking but
+    unresolvable in a single-pass reader.
+    """
+    diagnostics: list[Diagnostic] = []
+    all_defs = {el.get("DEF") for el in scene.iter() if el.get("DEF")}
+    seen: set[str] = set()
+    for el in scene.iter():
+        use_name = el.get("USE")
+        if use_name and use_name not in seen and use_name in all_defs:
+            diagnostics.append(Diagnostic(
+                level="error", check="use-before-def",
+                message=f"USE='{use_name}' ({_local_tag(el)}) appears before its DEF in "
+                        f"document order. A USE must follow the DEF it references.",
+                node_tag=_local_tag(el), def_name=use_name))
+        def_name = el.get("DEF")
+        if def_name:
+            seen.add(def_name)
+    return diagnostics
+
+
+# Floats per key for each interpolator's keyValue (None = a variable multiple of
+# the base tuple, e.g. CoordinateInterpolator stores numCoords*3 per key).
+_INTERP_ARITY = {
+    "ScalarInterpolator": 1, "SplineScalarInterpolator": 1,
+    "PositionInterpolator2D": 2, "SplinePositionInterpolator2D": 2,
+    "PositionInterpolator": 3, "SplinePositionInterpolator": 3, "GeoPositionInterpolator": 3,
+    "ColorInterpolator": 3,
+    "OrientationInterpolator": 4, "SquadOrientationInterpolator": 4,
+    "CoordinateInterpolator": None, "NormalInterpolator": None,
+    "CoordinateInterpolator2D": None,
+}
+_INTERP_BASE = {"CoordinateInterpolator": 3, "NormalInterpolator": 3,
+                "CoordinateInterpolator2D": 2}
+
+
+def _count(attr: str) -> int:
+    return len([x for x in re.split(r"[\s,]+", attr.strip()) if x])
+
+
+def _check_interpolator_keys(scene: etree._Element) -> list[Diagnostic]:
+    """key and keyValue array lengths must agree (ISO 19775-1 19.x).
+
+    A mismatch is a common silent animation bug: the interpolator clamps or
+    produces garbage, and nothing warns. e.g. an OrientationInterpolator needs
+    exactly 4 keyValue floats (one SFRotation) per key.
+    """
+    diagnostics: list[Diagnostic] = []
+    for tag, arity in _INTERP_ARITY.items():
+        for el in scene.iter(tag):
+            key, kv = el.get("key"), el.get("keyValue")
+            if key is None or kv is None:
+                continue
+            nk, nv = _count(key), _count(kv)
+            label = f" (DEF={el.get('DEF')!r})" if el.get("DEF") else ""
+            if nk == 0:
+                continue
+            if nv % nk != 0:
+                diagnostics.append(Diagnostic(
+                    level="error", check="interpolator-key-length",
+                    message=f"{tag}{label}: keyValue has {nv} values, not divisible by the "
+                            f"{nk} key(s). Each key needs a whole keyValue entry.",
+                    node_tag=tag, def_name=el.get("DEF", "")))
+                continue
+            per = nv // nk
+            if arity is not None and per != arity:
+                diagnostics.append(Diagnostic(
+                    level="error", check="interpolator-key-length",
+                    message=f"{tag}{label}: expected {arity} keyValue float(s) per key "
+                            f"({nk} keys -> {nk * arity}), got {per} per key ({nv} total).",
+                    node_tag=tag, def_name=el.get("DEF", "")))
+            elif arity is None:
+                base = _INTERP_BASE.get(tag, 1)
+                if per % base != 0:
+                    diagnostics.append(Diagnostic(
+                        level="error", check="interpolator-key-length",
+                        message=f"{tag}{label}: {per} keyValue float(s) per key is not a "
+                                f"multiple of {base} (one coordinate is {base} floats).",
+                        node_tag=tag, def_name=el.get("DEF", "")))
+    return diagnostics
+
+
 def _check_missing_viewpoint(scene: etree._Element) -> list[Diagnostic]:
     if list(scene.iter("Viewpoint")):
         return []
@@ -307,9 +519,12 @@ def _check_missing_viewpoint(scene: etree._Element) -> list[Diagnostic]:
 _ALL_CHECKS = [
     _check_duplicate_defs,
     _check_def_use_consistency,
+    _check_use_before_def,
+    _check_containerfield,
     _check_shape_completeness,
     _check_empty_groups,
     _check_route_validity,
+    _check_interpolator_keys,
     _check_missing_viewpoint,
 ]
 

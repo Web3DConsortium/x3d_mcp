@@ -201,3 +201,28 @@ def test_complete_scene(sm):
     assert "Sphere" in xml
     assert "Interchange" in xml
     assert "Complete Test Scene" in xml
+
+
+def test_containerfield_override_nondefault_placement():
+    """Granular mode can place a node in a non-default field (the x3d.py gap)."""
+    from validation.semantic import validate_semantic
+    s = SceneManager()
+    ap = s.create_node("Appearance")
+    pm = s.create_node("PhysicalMaterial")
+    tx = s.create_node("ImageTexture", url=["t.png"])
+    s.add_child(ap, pm)
+    s.add_child(pm, tx, "baseTexture")            # was impossible before
+    xml = s.to_xml()
+    assert "baseTexture" in xml
+    assert "containerfield" not in validate_semantic(xml)
+
+
+def test_containerfield_override_rejects_bad_field():
+    s = SceneManager()
+    pm = s.create_node("PhysicalMaterial")
+    tx = s.create_node("ImageTexture")
+    try:
+        s.add_child(pm, tx, "nonexistentField")
+        assert False, "expected SceneError"
+    except SceneError:
+        pass
