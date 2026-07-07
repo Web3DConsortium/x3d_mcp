@@ -4,7 +4,7 @@
 
 This open project provides a [Model Context Protocol (MCP)](https://en.wikipedia.org/wiki/Model_Context_Protocol) server for generating, validating, and converting valid X3D content using assets and tools developed using the official X3D International Standards.
 A draft paper *[x3d_mcp: A Model Context Protocol Server for AI-Assisted X3D
-Authoring](https://github.com/Web3DConsortium/x3d_mcp/blob/main/docs/Model_Context_Protocol__MCP__for_Machine_Aided_X3D_Authoring.2026July7.pdf)* by Nikhil Narra, Rick Lentz, Nicholas Polys and Don Brutzman 
+Authoring](https://github.com/Web3DConsortium/x3d_mcp/blob/main/docs/Model_Context_Protocol__MCP__for_Machine_Aided_X3D_Authoring.2026July7.pdf)* by Nikhil Narra, Rick Lentz, Nicholas Polys, and Don Brutzman 
 describes project motivation and details has been submitted for review to [Web3D 2026 Conference](https://web3d.siggraph.org/2026).  Comments are always welcome!
 
 This project supports the [AI with X3D Special Interest Group](https://www.web3d.org/working-groups/ai-x3d) of the [Web3D Consortium](https://www.web3d.org), merging capabilities from [ricklentz/x3d_mcp](https://github.com/ricklentz/x3d_mcp) and [niknarra/x3d-mcp](https://github.com/niknarra/x3d-mcp). Unless otherwise indicated for specific contributions, the default open-source license is the BSD-style [Web3D Consortium Open-Source License](https://www.web3d.org/license).
