@@ -152,10 +152,10 @@ class TestCoverageReport:
         assert "tips_only_nodes" in report
         assert "field_drift" in report
 
-    def test_uom_has_265_nodes(self):
+    def test_uom_has_267_nodes(self):
         uom = get_x3duom()
         report = uom.get_coverage_report()
-        assert report["uom_node_count"] == 265
+        assert report["uom_node_count"] == 267
 
     def test_common_nodes_exist(self):
         uom = get_x3duom()
