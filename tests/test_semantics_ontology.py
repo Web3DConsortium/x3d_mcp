@@ -78,7 +78,7 @@ def test_mcp_tools_registered():
     mcp = FastMCP("test")
     semantics.register(mcp)
     import asyncio
-    tools = asyncio.get_event_loop().run_until_complete(mcp.list_tools())
+    tools = asyncio.run(mcp.list_tools())
     names = {t.name for t in tools}
     assert {"query_ontology", "node_parents", "describe_ontology_term"} <= names
 
@@ -91,7 +91,7 @@ def test_query_ontology_tool_output():
     semantics.register(mcp)
     # Invoke the underlying function through the tool manager
     import asyncio
-    result = asyncio.get_event_loop().run_until_complete(
+    result = asyncio.run(
         mcp.call_tool("node_parents", {"node_type": "Sphere"})
     )
     content = result[0] if not isinstance(result, tuple) else result[0]
@@ -109,7 +109,7 @@ def test_query_ontology_bad_sparql():
     mcp = FastMCP("test")
     semantics.register(mcp)
     import asyncio
-    result = asyncio.get_event_loop().run_until_complete(
+    result = asyncio.run(
         mcp.call_tool("query_ontology", {"sparql": "SELECT WHERE nonsense"})
     )
     content = result[0] if not isinstance(result, tuple) else result[0]
