@@ -13,6 +13,7 @@ dependencies = [
     "lxml>=6.0",
     "xmlschema>=4.3",
     "jsonschema>=4.26",
+    "rdflib>=7.0",
 ]
 
 [project.optional-dependencies]
