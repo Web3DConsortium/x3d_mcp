@@ -73,6 +73,10 @@ SELECT DISTINCT ?parent ?field WHERE {
          rdfs:range ?range ;
          rdfs:domain ?parent .
   x3d:%s rdfs:subClassOf* ?range .
+  # Named, specific ranges only: the aggregate hasChildren-family
+  # properties also carry a bare X3DNode range and anonymous union
+  # ranges, which would admit every node type as a child.
+  FILTER(isIRI(?range) && ?range != x3d:X3DNode)
 }
 ORDER BY ?parent
 """ % node_type
