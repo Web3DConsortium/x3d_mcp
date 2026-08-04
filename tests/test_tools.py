@@ -131,7 +131,7 @@ def test_query_list_components():
     from x3d_utils.x3duom import get_x3duom
     uom = get_x3duom()
     components = uom.get_components()
-    assert len(components) == 36
+    assert len(components) == 37
 
 
 def test_query_list_profiles():

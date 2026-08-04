@@ -18,7 +18,7 @@ def register(mcp: FastMCP):
 
         Args:
             component: Filter by component name (e.g. "Geometry3D", "Shape").
-                      If None, returns all 260 concrete nodes grouped by component.
+                      If None, returns all 267 concrete nodes grouped by component.
         """
         uom = get_x3duom()
         if component:

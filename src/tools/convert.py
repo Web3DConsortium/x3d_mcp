@@ -110,7 +110,7 @@ def _coerce_value(value_str: str, field_type: str):
     elif field_type in ("SFVec3f", "SFVec3d"):
         parts = value_str.split()
         return tuple(float(p) for p in parts[:3])
-    elif field_type in ("SFVec4f", "SFVec4d", "SFRotation"):
+    elif field_type in ("SFVec4f", "SFVec4d", "SFRotation", "SFQuaternion"):
         parts = value_str.split()
         return tuple(float(p) for p in parts[:4])
     elif field_type in ("SFColor",):
@@ -129,6 +129,10 @@ def _coerce_value(value_str: str, field_type: str):
         parts = value_str.replace(",", " ").split()
         floats = [float(p) for p in parts]
         return [tuple(floats[i:i+3]) for i in range(0, len(floats), 3)]
+    elif field_type in ("MFVec4f", "MFVec4d", "MFRotation", "MFQuaternion"):
+        parts = value_str.replace(",", " ").split()
+        floats = [float(p) for p in parts]
+        return [tuple(floats[i:i+4]) for i in range(0, len(floats), 4)]
     elif field_type in ("MFColor",):
         parts = value_str.replace(",", " ").split()
         floats = [float(p) for p in parts]
