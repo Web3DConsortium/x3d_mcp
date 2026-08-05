@@ -3,7 +3,7 @@
 The x3d_mcp project provides a [Model Context Protocol (MCP)](https://en.wikipedia.org/wiki/Model_Context_Protocol) server for generating, validating, and converting valid X3D content using assets and tools developed for the official X3D International Standards.
 The final-draft paper *[x3d_mcp: A Model Context Protocol Server for AI-Assisted X3D
 Authoring](https://github.com/Web3DConsortium/x3d_mcp/blob/main/docs/Model_Context_Protocol__MCP__for_Machine_Aided_X3D_Authoring.pdf)* by Nikhil Narra, Rick Lentz, Nicholas Polys, and Don Brutzman 
-describes project motivation and details has been submitted for review to [Web3D 2026 Conference](https://web3d.siggraph.org/2026).  Comments are always welcome!
+describes project motivation and details, and has been accepted for publication at the [Web3D 2026 Conference](https://web3d.siggraph.org/2026) (October 13-15, 2026, Doha, Qatar).  Comments are always welcome!
 
 [Extensible 3D (X3D) Graphics](https://www.web3d.org/x3d/what-x3d) is the open, royalty-free International Standard for publishing, viewing, printing, and archiving interactive 3D models on the Web. X3D further supports the Humanoid Animation (HAnim) Standard which includes full-fidelity representations for articulated skeleton and skin of the human body.  These are powerful capabilities. 
 
@@ -33,7 +33,17 @@ To verify the server starts correctly:
 uv run python src/server.py
 ```
 
-The server uses stdio transport and is designed to be launched by an MCP client, not run standalone. See the client configuration sections below.
+The default transport is stdio: the server is designed to be launched as a subprocess by an MCP client, not run standalone. See the client configuration sections below.
+
+### Streamable HTTP transport
+
+Set `MCP_TRANSPORT=streamable-http` to serve remote MCP clients over HTTP instead:
+
+```bash
+MCP_TRANSPORT=streamable-http PORT=8000 uv run python src/server.py
+```
+
+The MCP endpoint is `/mcp`; `/` returns a small server info card and `/pulse` is a dependency-free health check for hosting platforms. Two safeguards apply under HTTP: each connected session gets its own granular scene state (concurrent clients cannot see or mutate each other's scenes), and file-path tool inputs are disabled (inline content only) so remote callers cannot read files from the server's filesystem. The production `Dockerfile` runs this mode by default.
 
 ### MCP Inspector
 
@@ -117,7 +127,7 @@ uv run --directory /absolute/path/to/x3d_mcp python src/server.py
 
 ### Language: Python
 
-- **`x3d.py`** (PyPI `x3d` v4.0.65, BSD-3) -- official Web3D Consortium package, auto-generated from X3DUOM
+- **`x3d.py`** (PyPI `x3d` v4.0.65.5, BSD-3) -- official Web3D Consortium package, auto-generated from X3DUOM
 - **`lxml`** -- XSD and ISO-Schematron validation, 42x faster than pure-Python alternatives
 - **`FastMCP`** (PyPI `mcp`) -- official Anthropic MCP SDK, decorator-based tool registration
 - All dependencies are BSD/MIT licensed. Project uses [Web3D Consortium Open-Source License](https://www.web3d.org/license).
@@ -141,11 +151,11 @@ Four layers, matching the X3D specification's own validation hierarchy:
 1. **Type checking at generation time** -- `x3d.py` enforces field types, ranges, and enumerations during scene construction
 2. **XSD validation** -- `lxml.etree.XMLSchema` against `x3d-4.1.xsd` (bundled with companion schemas)
 3. **JSON Schema validation** -- `jsonschema.Draft202012Validator` against `x3d-4.0-JSONSchema.json` (Web3D Consortium, 364 `$defs`). Catches misspelled keys (`head`/`meta`/etc.), unknown node names inside `Scene`, missing required fields (`encoding`, `@version`, `@profile`, `Scene`), and wrong-type values. Web3D has not yet published a 4.1 JSON Schema, so the 4.0 schema is bundled in the meantime.
-4. **Semantic checks** -- imperative Python checks for authoring-level bugs XSD cannot express: missing geometry/appearance on Shapes, empty grouping nodes, duplicate DEFs, USE/DEF consistency, ROUTE field/access-type/type validity, missing Viewpoints. Adapted from [niknarra/x3d-mcp](https://github.com/niknarra/x3d-mcp) (Nikhil Narra, Nicholas Polys -- Virginia Tech / Web3D Consortium).
+4. **Semantic checks** -- imperative Python checks for authoring-level bugs XSD cannot express: missing geometry/appearance on Shapes, empty grouping nodes, duplicate DEFs, USE/DEF consistency and USE-before-DEF ordering, wrong or defaulted containerField (with the canonical field suggested), ROUTE field/access-type/type validity (honoring Script and ProtoInstance declared interfaces and the spec's set_X/X_changed aliases), interpolator key/keyValue length mismatches, naming conventions (periods and hyphens in DEF/USE/name values), and missing Viewpoints. Adapted from [niknarra/x3d-mcp](https://github.com/niknarra/x3d-mcp) (Nikhil Narra, Nicholas Polys -- Virginia Tech / Web3D Consortium).
 
 ### X3DUOM as Foundation
 
-The `X3dUnifiedObjectModel-4.1.xml` (X3DUOM) is the single source of truth for all 265 concrete nodes (5 new in 4.1: EnvironmentLight, FontLibrary, HAnimPose, InlineGeometry, Tangent), abstract types, simple types, and statements. It is parsed at build time to generate:
+The `X3dUnifiedObjectModel-4.1.xml` (X3DUOM) is the single source of truth for all 267 concrete nodes (new in 4.1: EnvironmentLight, FontLibrary, GaussianSplats, HAnimPose, InlineGeometry, RenderedTexture, Tangent), abstract types, simple types, and statements. The X3D Ontology (`X3dOntology4.0.ttl`) is bundled alongside it, backing SPARQL queries over the type system that the flat X3DUOM index cannot answer (see Semantic Query Tools). It is parsed at build time to generate:
 
 - Node/field metadata lookup tables
 - containerField mapping rules
@@ -165,17 +175,22 @@ x3d_mcp/
       validate_tool.py     # Validation MCP tool wrappers
       convert.py           # Encoding conversion (XML, JSON, VRML)
       query.py             # Node/field metadata queries
-      render.py            # X3DOM HTML page wrapper for browser viewing
+      render.py            # X3DOM HTML pages + X_ITE render-to-PNG (optional playwright)
       scene_ops.py         # Scene CRUD: modify, remove, move nodes
       animate.py           # Animation chain generation (TimeSensor + Interpolator + ROUTE)
+      semantics.py         # SPARQL query tools over the bundled X3D Ontology
       prompts.py           # MCP prompts for guided workflows
     x3d_utils/
       scene.py             # Scene graph state management
       x3duom.py            # X3DUOM parser, node/field metadata
+      tooltips.py          # X3D-Edit tooltip overlay for enriched descriptions
+      ontology.py          # rdflib loader for the X3D Ontology
+      source.py            # Inline-content / file-path input resolver
     validation/
       validate.py          # XSD + JSON validation pipeline
-      semantic.py          # Layer 4 semantic checks (DEF/USE, ROUTE validity, etc.)
-      schemas/             # Bundled x3d-4.1.xsd, x3d-4.1.dtd, X3DUOM 4.1
+      semantic.py          # Layer 4 semantic checks (DEF/USE, ROUTE validity, containerField, naming, ...)
+      autofix.py           # containerField autofixer
+      schemas/             # Bundled x3d-4.1.xsd, x3d-4.1.dtd, X3DUOM 4.1, X3dOntology4.0.ttl
   dataset/
     schema.py              # Canonical training example schema, normalization
     normalize.py           # JSONL schema normalization CLI
@@ -186,10 +201,12 @@ x3d_mcp/
     generators/
       numeric_sequences.py # IndexedFaceSet, Extrusion, Interpolator generators
   tests/
+  evaluation/              # Ontology-vs-XSD cross-validation, validation-level ablation harness
   output/
     logs/                  # Container logs per issue number
   docs/                    # Research and reference documentation
-  Dockerfile
+  Dockerfile               # Production HTTP server image
+  Dockerfile.test          # Pytest image (used by docker-compose)
   docker-compose.yml
   pyproject.toml
   README.md
@@ -211,7 +228,7 @@ x3d_mcp/
 |------|-------------|
 | `create_node` | Create an X3D node by type name. Returns a node handle for further manipulation. |
 | `set_field` | Set a field value on a node (with type validation). |
-| `add_child` | Add a child node to a parent (validates containerField rules). |
+| `add_child` | Add a child node to a parent (validates containerField rules). Optional `container_field` places the child in a non-default parent field, e.g. `baseTexture` or `skeleton`. |
 | `add_route` | Create a ROUTE between two node fields (validates field existence and type compatibility). |
 | `def_node` | Assign a DEF name to a node. |
 | `use_node` | Reference a previously DEF'd node via USE. |
@@ -223,9 +240,10 @@ x3d_mcp/
 
 | Tool | Description |
 |------|-------------|
-| `validate_x3d` | Validate an X3D document (XML or JSON) against the XSD schema. Returns pass/fail with detailed error messages. |
-| `validate_current_scene` | Validate the current granular scene against the XSD schema. |
-| `validate_semantic` | Run semantic checks on X3D XML beyond XSD: missing geometry/appearance on Shapes, empty grouping nodes, duplicate DEFs, USE/DEF consistency, ROUTE field/access-type/type-match validity, missing Viewpoints. Returns a markdown report. |
+| `validate_x3d` | Validate an X3D document (XML or JSON) against the XSD schema. Accepts inline `content` or a `path` (stdio transport only). Returns pass/fail with detailed error messages. |
+| `validate_current_scene` | Validate the current granular scene -- both the XSD schema check and the semantic checks. |
+| `validate_semantic` | Run semantic checks beyond XSD: Shape completeness, empty groups, duplicate DEFs, USE/DEF consistency and ordering, containerField correctness, ROUTE validity (including Script/ProtoInstance interfaces and set_X/X_changed aliases), interpolator key lengths, naming conventions, missing Viewpoints. Returns a markdown report. |
+| `autofix_x3d` | Rewrite wrong or defaulted containerField values to the canonical field and return the corrected document. |
 
 ### Conversion Tools
 
@@ -242,12 +260,24 @@ x3d_mcp/
 | `list_components` | List all X3D components with their support levels. |
 | `list_profiles` | List available profiles and their component requirements. |
 
+### Semantic Query Tools
+
+Backed by the bundled X3D Ontology (`X3dOntology4.0.ttl`, 17,736 triples, parsed via rdflib at first use). Ontology answers are advisory; XSD and semantic validation remain ground truth.
+
+| Tool | Description |
+|------|-------------|
+| `query_ontology` | Run a SPARQL SELECT or ASK query against the X3D Ontology. Standard prefixes (x3d, owl, rdf, rdfs, dcterms) are pre-declared. |
+| `node_parents` | List the node types whose fields may legally contain a given node type, naming the admitting field -- a relationship query the X3DUOM index cannot answer. |
+| `describe_ontology_term` | Describe an ontology class or property: labels, super/sub classes and properties, domains, ranges, inverses. |
+
 ### Render Tools
 
 | Tool | Description |
 |------|-------------|
 | `x3dom_page` | Wrap X3D content (full document or scene fragment) in a standalone X3DOM HTML page for browser viewing. Lowercases tag/attr names, strips namespace declarations, embeds X3DOM 1.8.2 from CDN. Adapted from [niknarra/x3d-mcp](https://github.com/niknarra/x3d-mcp). |
 | `x3dom_starter` | Return a starter X3DOM HTML page with a small example scene. Useful as a known-good baseline. |
+| `render_image` | Render a scene to PNG via a headless X\_ITE browser (Playwright/Chromium), covering PBR materials and HAnim that X3DOM leaves blank headlessly. Requires the optional `[render]` extra. |
+| `render_current_scene` | Render the current granular scene to PNG via the same X\_ITE backend. |
 
 ### Scene Manipulation Tools
 
@@ -359,20 +389,25 @@ Full node reference: [docs/x3d-node-reference.md](docs/x3d-node-reference.md)
 | Package | Version | Purpose |
 |---------|---------|---------|
 | `mcp` | >=1.7 | MCP SDK (FastMCP) |
-| `x3d` | >=4.0.65 | Official X3D scene construction and type validation |
+| `x3d` | >=4.0.65.5,<5 | Official X3D scene construction and type validation |
 | `lxml` | >=6.0 | XSD validation, Schematron validation, XSLT transforms |
 | `xmlschema` | >=4.3 | Pure-Python XSD validation (fallback) |
 | `jsonschema` | >=4.26 | JSON Schema validation for X3D JSON encoding |
+| `rdflib` | >=7.0 | SPARQL queries over the bundled X3D Ontology |
+| `playwright` | >=1.40 (optional `[render]` extra) | Headless Chromium for `render_image` / `render_current_scene` |
 
 ## Docker
 
-All code lives on the host. Docker is used for testing and validation only.
+Two images:
+
+- **`Dockerfile`** -- production server image. Runs the Streamable HTTP transport by default (`MCP_TRANSPORT=streamable-http`, port from `PORT`), making the repo deploy-ready for hosts that auto-detect a root Dockerfile (Render, Fly.io, Railway, Cloud Run, etc.).
+- **`Dockerfile.test`** -- CI/pytest image, used by docker-compose:
 
 ```bash
 docker compose up --build
 ```
 
-The container mounts `src/` and `tests/` from the host. Logs are written to `output/logs/`.
+The test container mounts `src/` and `tests/` from the host. Logs are written to `output/logs/`.
 
 ## Reference Documentation
 
