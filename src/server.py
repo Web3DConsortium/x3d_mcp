@@ -27,7 +27,7 @@ _real_stdout = sys.stdout
 sys.stdout = sys.stderr
 from tools import (
     workflow, granular, convert, query, validate_tool, render, scene_ops, animate,
-    prompts,
+    prompts, semantics,
 )
 sys.stdout = _real_stdout
 
@@ -82,6 +82,7 @@ render.register(mcp)
 scene_ops.register(mcp)
 animate.register(mcp)
 prompts.register(mcp)
+semantics.register(mcp)
 
 
 # Friendly responses on the root and /pulse paths under HTTP transport.
