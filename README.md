@@ -7,6 +7,8 @@ describes project motivation and details has been submitted for review to [Web3D
 
 [Extensible 3D (X3D) Graphics](https://www.web3d.org/x3d/what-x3d) is the open, royalty-free International Standard for publishing, viewing, printing, and archiving interactive 3D models on the Web. X3D further supports the Humanoid Animation (HAnim) Standard which includes full-fidelity representations for articulated skeleton and skin of the human body.  These are powerful capabilities. 
 
+More information can be found at [MCP Specification](https://modelcontextprotocol.io/docs/2026-07-28/getting-started/intro) page, sponsored by [Linux Foundation](https://lfprojects.org).
+
 This project supports the [AI with X3D Special Interest Group](https://www.web3d.org/working-groups/ai-x3d) of the [Web3D Consortium](https://www.web3d.org), merging capabilities from [ricklentz/x3d_mcp](https://github.com/ricklentz/x3d_mcp) and [niknarra/x3d-mcp](https://github.com/niknarra/x3d-mcp). Unless otherwise indicated for specific contributions, the default open-source license is the BSD-style [Web3D Consortium Open-Source License](https://www.web3d.org/license).
 
 ## Overview
