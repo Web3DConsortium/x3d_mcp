@@ -240,3 +240,46 @@ def test_route_to_truly_missing_script_field_still_flagged():
         '<ROUTE fromNode="T" fromField="cycleTime" toNode="S" toField="nonexistent"/>')
     report = validate_semantic(xml)
     assert "route-invalid-to-field" in report        # a real typo is still caught
+
+
+# ---- Naming conventions (X3D Scene Authoring Hints) ----
+# Periods break ClassicVRML ROUTE syntax; hyphens become subtraction
+# operators in generated identifiers. x3d.py's NMTOKEN check catches
+# periods on the construction path only and accepts hyphens everywhere,
+# so this Level-4 check is the sole guard covering raw-XML editing.
+
+def test_def_with_period_warned():
+    report = validate_semantic(_wrap('<Transform DEF="my.name"><Shape/></Transform>'))
+    assert "naming-convention" in report
+    assert "ClassicVRML ROUTE" in report
+
+
+def test_def_with_hyphen_warned():
+    report = validate_semantic(_wrap('<Transform DEF="my-name"><Shape/></Transform>'))
+    assert "naming-convention" in report
+    assert "subtraction" in report
+
+
+def test_use_and_name_attrs_also_checked():
+    report = validate_semantic(_wrap(
+        '<Transform DEF="Ok"><Shape/></Transform>'
+        '<Transform USE="bad-ref"/>'))
+    assert "naming-convention" in report
+
+    report2 = validate_semantic(_wrap(
+        '<HAnimHumanoid name="humanoid.1" containerField="children"/>'))
+    assert "naming-convention" in report2
+
+
+def test_leading_digit_is_error():
+    report = validate_semantic(_wrap('<Transform DEF="3start"><Shape/></Transform>'))
+    assert "naming-convention" in report
+    assert "starts with a digit" in report
+
+
+def test_clean_names_not_flagged():
+    report = validate_semantic(_wrap(
+        '<Transform DEF="CamelCaseName"><Shape>'
+        '<Appearance><Material/></Appearance><Box/></Shape></Transform>'
+        '<Viewpoint description="v"/>'))
+    assert "naming-convention" not in report
