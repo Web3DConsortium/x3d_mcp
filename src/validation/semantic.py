@@ -82,9 +82,16 @@ class Diagnostic:
 
 
 def _local_tag(el: etree._Element) -> str:
-    """Strip XML namespace prefix from an element tag."""
+    """Strip XML namespace prefix from an element tag.
+
+    Returns an empty string for non-element nodes (Comment,
+    ProcessingInstruction, Entity) whose `el.tag` is a Cython
+    callable rather than a string.
+    """
     tag = el.tag
-    if isinstance(tag, str) and tag.startswith("{"):
+    if not isinstance(tag, str):
+        return ""
+    if tag.startswith("{"):
         return tag.split("}", 1)[1]
     return tag
 

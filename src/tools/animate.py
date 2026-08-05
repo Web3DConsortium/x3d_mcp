@@ -67,7 +67,11 @@ def _serialize(tree: etree._Element) -> str:
 
 def _local_tag(el: etree._Element) -> str:
     tag = el.tag
-    if isinstance(tag, str) and tag.startswith("{"):
+    if not isinstance(tag, str):
+        # Non-element nodes (Comment, ProcessingInstruction, Entity)
+        # carry a Cython callable on .tag rather than a string.
+        return ""
+    if tag.startswith("{"):
         return tag.split("}", 1)[1]
     return tag
 

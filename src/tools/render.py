@@ -39,9 +39,15 @@ def _element_to_x3dom_html(el: etree._Element, depth: int = 0) -> str:
     and attribute names and does not honor self-closing tags on non-void
     elements. This serializer normalises accordingly and strips XML
     namespace declarations / prefixed attributes.
+
+    Comment, processing-instruction, and entity nodes have a non-string
+    `el.tag` (lxml exposes it as a Cython function such as etree.Comment);
+    these are skipped because they have no X3DOM equivalent.
     """
     tag = el.tag
-    if isinstance(tag, str) and tag.startswith("{"):
+    if not isinstance(tag, str):
+        return ""
+    if tag.startswith("{"):
         tag = tag.split("}", 1)[1]
     tag = tag.lower()
 
@@ -69,7 +75,9 @@ def _element_to_x3dom_html(el: etree._Element, depth: int = 0) -> str:
 
 def _local_tag(el: etree._Element) -> str:
     tag = el.tag
-    if isinstance(tag, str) and tag.startswith("{"):
+    if not isinstance(tag, str):
+        return ""
+    if tag.startswith("{"):
         return tag.split("}", 1)[1]
     return tag
 

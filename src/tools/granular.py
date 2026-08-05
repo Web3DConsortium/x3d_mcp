@@ -2,20 +2,54 @@
 
 Provides node-by-node scene construction tools for precise control
 over the X3D scene graph.
+
+Scene state is kept per client session: each connected MCP session gets
+its own SceneManager, so concurrent clients on the HTTP transport cannot
+see or mutate each other's scenes. Under stdio there is exactly one
+session per process, which reproduces the old single-scene behavior.
+Session scenes live only as long as the connection.
 """
 
-from mcp.server.fastmcp import FastMCP
+import weakref
+
+from mcp.server.fastmcp import Context, FastMCP
 
 from x3d_utils.scene import SceneManager
 
 
+# Fallback for callers with no live session (direct in-process calls,
+# tests); also keeps the old module-level name importable.
 _scene = SceneManager()
+
+_session_scenes: "weakref.WeakKeyDictionary" = weakref.WeakKeyDictionary()
+
+
+def _scene_for(ctx: Context | None) -> SceneManager:
+    """Return the SceneManager owned by the calling client session.
+
+    Falls back to the module-level scene when no request context is
+    active (ctx.session raises outside a live request).
+    """
+    if ctx is None:
+        return _scene
+    try:
+        session = ctx.session
+    except (ValueError, AttributeError):
+        return _scene
+    if session is None:
+        return _scene
+    scene = _session_scenes.get(session)
+    if scene is None:
+        scene = SceneManager()
+        _session_scenes[session] = scene
+    return scene
 
 
 def register(mcp: FastMCP):
 
     @mcp.tool()
-    def create_node(node_type: str, fields: dict | None = None) -> str:
+    def create_node(node_type: str, fields: dict | None = None,
+                    ctx: Context = None) -> str:
         """Create a new X3D node and return its tracking ID.
 
         Args:
@@ -23,12 +57,13 @@ def register(mcp: FastMCP):
             fields: Optional dict of field name -> value pairs to set on creation.
         """
         kwargs = fields or {}
-        node_id = _scene.create_node(node_type, **kwargs)
+        node_id = _scene_for(ctx).create_node(node_type, **kwargs)
         return f"Created {node_type} with ID: {node_id}"
 
     @mcp.tool()
     def set_field(node_id: str, field_name: str,
-                  value: str | int | float | list) -> str:
+                  value: str | int | float | list,
+                  ctx: Context = None) -> str:
         """Set a field value on an existing node.
 
         Args:
@@ -38,23 +73,23 @@ def register(mcp: FastMCP):
         """
         if isinstance(value, list):
             value = tuple(value)
-        _scene.set_field(node_id, field_name, value)
+        _scene_for(ctx).set_field(node_id, field_name, value)
         return f"Set {field_name} on {node_id}"
 
     @mcp.tool()
-    def add_child(parent_id: str, child_id: str) -> str:
+    def add_child(parent_id: str, child_id: str, ctx: Context = None) -> str:
         """Add a child node to a parent node in the scene graph.
 
         Args:
             parent_id: The parent node tracking ID.
             child_id: The child node tracking ID.
         """
-        _scene.add_child(parent_id, child_id)
+        _scene_for(ctx).add_child(parent_id, child_id)
         return f"Added {child_id} as child of {parent_id}"
 
     @mcp.tool()
     def add_route(from_node: str, from_field: str,
-                  to_node: str, to_field: str) -> str:
+                  to_node: str, to_field: str, ctx: Context = None) -> str:
         """Add a ROUTE connecting two node fields for event propagation.
 
         Args:
@@ -63,58 +98,59 @@ def register(mcp: FastMCP):
             to_node: Target node tracking ID (must have a DEF name).
             to_field: Target field name (e.g. "set_fraction").
         """
-        _scene.add_route(from_node, from_field, to_node, to_field)
+        _scene_for(ctx).add_route(from_node, from_field, to_node, to_field)
         return f"Added ROUTE from {from_node}.{from_field} to {to_node}.{to_field}"
 
     @mcp.tool()
-    def def_node(node_id: str, name: str) -> str:
+    def def_node(node_id: str, name: str, ctx: Context = None) -> str:
         """Assign a DEF name to a node for referencing via USE or ROUTE.
 
         Args:
             node_id: The node tracking ID.
             name: The DEF name to assign (must be unique in the scene).
         """
-        _scene.def_node(node_id, name)
+        _scene_for(ctx).def_node(node_id, name)
         return f"Assigned DEF '{name}' to {node_id}"
 
     @mcp.tool()
-    def use_node(def_name: str) -> str:
+    def use_node(def_name: str, ctx: Context = None) -> str:
         """Create a USE reference to a previously DEF'd node.
 
         Args:
             def_name: The DEF name of the node to reference.
         """
-        node_id = _scene.use_node(def_name)
+        node_id = _scene_for(ctx).use_node(def_name)
         return f"Created USE reference to '{def_name}' with ID: {node_id}"
 
     @mcp.tool()
-    def remove_node(node_id: str) -> str:
+    def remove_node(node_id: str, ctx: Context = None) -> str:
         """Remove a node and its children from the scene.
 
         Args:
             node_id: The node tracking ID to remove.
         """
-        _scene.remove_node(node_id)
+        _scene_for(ctx).remove_node(node_id)
         return f"Removed node {node_id}"
 
     @mcp.tool()
-    def get_scene(encoding: str = "xml") -> str:
+    def get_scene(encoding: str = "xml", ctx: Context = None) -> str:
         """Get the current scene in the specified encoding.
 
         Args:
             encoding: Output encoding - "xml", "json", or "vrml".
         """
+        scene = _scene_for(ctx)
         if encoding == "xml":
-            return _scene.to_xml()
+            return scene.to_xml()
         elif encoding == "json":
-            return _scene.to_json()
+            return scene.to_json()
         elif encoding == "vrml":
-            return _scene.to_vrml()
+            return scene.to_vrml()
         else:
             return f"Unknown encoding: {encoding}. Use 'xml', 'json', or 'vrml'."
 
     @mcp.tool()
-    def reset_scene() -> str:
+    def reset_scene(ctx: Context = None) -> str:
         """Clear all nodes and reset the scene to empty state."""
-        _scene.reset()
+        _scene_for(ctx).reset()
         return "Scene reset to empty state"
