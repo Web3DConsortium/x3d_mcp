@@ -204,3 +204,39 @@ def test_multiple_issues_all_reported():
 def test_invalid_xml_source():
     report = validate_semantic("<broken")
     assert "Parse Error" in report
+
+
+# ---- ROUTEs into dynamic interfaces (Script <field> + ProtoInstance) ----
+# A Script's user-declared fields and a ProtoInstance's interface are not in
+# X3DUOM, so the route-validity check must read them from the scene -- otherwise
+# every valid ROUTE into a Script/proto field is false-flagged route-invalid.
+
+def test_route_to_script_declared_field_is_valid():
+    xml = _wrap(
+        '<TimeSensor DEF="T" cycleInterval="2" loop="true"/>'
+        '<Script DEF="S" directOutput="true">'
+        '<field name="arrived" type="SFTime" accessType="inputOnly"/></Script>'
+        '<ROUTE fromNode="T" fromField="cycleTime" toNode="S" toField="arrived"/>')
+    report = validate_semantic(xml)
+    assert "route-invalid-to-field" not in report   # 'arrived' is a declared field
+
+
+def test_route_to_protoinstance_interface_field_is_valid():
+    xml = _wrap(
+        '<ProtoDeclare name="Mover"><ProtoInterface>'
+        '<field name="set_time" type="SFTime" accessType="inputOnly"/>'
+        '</ProtoInterface><ProtoBody><Transform/></ProtoBody></ProtoDeclare>'
+        '<TimeSensor DEF="T" cycleInterval="2"/>'
+        '<Mover DEF="M"/>'
+        '<ROUTE fromNode="T" fromField="cycleTime" toNode="M" toField="set_time"/>')
+    report = validate_semantic(xml)
+    assert "route-invalid-to-field" not in report   # 'set_time' is in the interface
+
+
+def test_route_to_truly_missing_script_field_still_flagged():
+    xml = _wrap(
+        '<TimeSensor DEF="T" cycleInterval="2"/>'
+        '<Script DEF="S"><field name="arrived" type="SFTime" accessType="inputOnly"/></Script>'
+        '<ROUTE fromNode="T" fromField="cycleTime" toNode="S" toField="nonexistent"/>')
+    report = validate_semantic(xml)
+    assert "route-invalid-to-field" in report        # a real typo is still caught
