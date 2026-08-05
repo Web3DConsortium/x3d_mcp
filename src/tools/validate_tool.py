@@ -8,7 +8,8 @@ from mcp.server.fastmcp import FastMCP
 
 from validation.validate import validate_xml, validate_json
 from validation.semantic import validate_semantic as _validate_semantic
-from tools.granular import _scene
+from mcp.server.fastmcp import Context
+from tools.granular import _scene_for
 
 
 def register(mcp: FastMCP):
@@ -30,9 +31,9 @@ def register(mcp: FastMCP):
         return json.dumps(result, indent=2)
 
     @mcp.tool()
-    def validate_current_scene() -> str:
+    def validate_current_scene(ctx: Context = None) -> str:
         """Validate the current granular scene against the X3D 4.1 schema."""
-        xml_content = _scene.to_xml()
+        xml_content = _scene_for(ctx).to_xml()
         result = validate_xml(xml_content)
         return json.dumps(result, indent=2)
 

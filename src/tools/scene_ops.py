@@ -15,6 +15,16 @@ from lxml import etree
 from mcp.server.fastmcp import FastMCP
 
 
+def _http_transport_active() -> bool:
+    """Whether the server is running over the Streamable HTTP transport.
+
+    File-path input is a local-use affordance; over HTTP it would let
+    remote callers read .x3d files from the server's filesystem.
+    """
+    transport = os.environ.get("MCP_TRANSPORT", "stdio").lower()
+    return transport in ("http", "streamable-http")
+
+
 def _parse_x3d_source(source: str) -> etree._Element:
     """Parse an X3D source (file path or inline XML string) into an lxml tree.
 
@@ -29,6 +39,12 @@ def _parse_x3d_source(source: str) -> etree._Element:
             return etree.fromstring(stripped.encode(), parser)
         except etree.XMLSyntaxError as e:
             raise ValueError(f"Invalid X3D XML: {e}")
+
+    if _http_transport_active():
+        raise ValueError(
+            "File-path input is disabled over the HTTP transport. "
+            "Provide inline X3D XML content instead."
+        )
 
     if not os.path.exists(stripped):
         raise ValueError(

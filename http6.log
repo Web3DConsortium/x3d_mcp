@@ -1,0 +1,26 @@
+x3d.py package 4.0.65.5 loaded, have fun with X3D Graphics!
+x3d-mcp listening on http://0.0.0.0:8770/mcp (streamable-http)
+INFO:     Started server process [52710]
+INFO:     Waiting for application startup.
+[08/05/26 18:23:18] INFO     StreamableHTTP       streamable_http_manager.py:115
+                             session manager                                    
+                             started                                            
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8770 (Press CTRL+C to quit)
+[08/05/26 18:23:21] INFO     Created new          streamable_http_manager.py:239
+                             transport with                                     
+                             session ID:                                        
+                             a806caf361d24f7c817a                               
+                             f2fd67e45a6a                                       
+INFO:     127.0.0.1:53084 - "POST /mcp HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53085 - "POST /mcp HTTP/1.1" 202 Accepted
+INFO:     127.0.0.1:53086 - "POST /mcp HTTP/1.1" 200 OK
+                    INFO     Processing request of type            server.py:713
+                             CallToolRequest                                    
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+                    INFO     StreamableHTTP       streamable_http_manager.py:119
+                             session manager                                    
+                             shutting down                                      
+INFO:     Application shutdown complete.
+INFO:     Finished server process [52710]

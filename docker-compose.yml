@@ -1,6 +1,8 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.test
     volumes:
       - ./src:/app/src
       - ./tests:/app/tests
