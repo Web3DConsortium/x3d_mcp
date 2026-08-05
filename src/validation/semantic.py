@@ -560,6 +560,69 @@ def _check_interpolator_keys(scene: etree._Element) -> list[Diagnostic]:
     return diagnostics
 
 
+_NAMING_HINTS_URL = (
+    "https://www.web3d.org/x3d/content/examples/"
+    "X3dSceneAuthoringHints.html#NamingConventions"
+)
+
+
+def _check_naming_conventions(scene: etree._Element) -> list[Diagnostic]:
+    """Flag DEF/USE/name values that break cross-encoding compatibility.
+
+    Periods collide with ClassicVRML ROUTE syntax and hyphens become
+    subtraction operators when names are turned into programming-language
+    identifiers (X3D Scene Authoring Hints, Naming Conventions). x3d.py's
+    NMTOKEN check rejects periods on the construction path, but hyphens
+    pass it, and content edited as raw XML never reaches x3d.py at all --
+    this check is the only guard covering both paths.
+    """
+    diagnostics: list[Diagnostic] = []
+    seen: set[tuple[str, str]] = set()
+    for el in scene.iter():
+        tag = _local_tag(el)
+        if not tag:
+            continue
+        for attr in ("DEF", "USE", "name"):
+            value = el.get(attr)
+            if not value or (attr, value) in seen:
+                continue
+            seen.add((attr, value))
+            problems = []
+            if "." in value:
+                problems.append("'.' interferes with ClassicVRML ROUTE syntax")
+            if "-" in value:
+                problems.append("'-' becomes a subtraction operator in "
+                                "generated class/variable names")
+            if problems:
+                diagnostics.append(Diagnostic(
+                    level="warning",
+                    check="naming-convention",
+                    message=f"{attr}='{value}' on {tag}: " + "; ".join(problems)
+                            + f". See {_NAMING_HINTS_URL}",
+                    node_tag=tag,
+                    def_name=value if attr in ("DEF", "USE") else "",
+                ))
+            if value != value.strip() or any(c.isspace() for c in value):
+                diagnostics.append(Diagnostic(
+                    level="error",
+                    check="naming-convention",
+                    message=f"{attr}='{value}' on {tag} contains whitespace, "
+                            f"which is illegal in ID/NMTOKEN values.",
+                    node_tag=tag,
+                    def_name=value if attr in ("DEF", "USE") else "",
+                ))
+            elif value[0].isdigit():
+                diagnostics.append(Diagnostic(
+                    level="error",
+                    check="naming-convention",
+                    message=f"{attr}='{value}' on {tag} starts with a digit, "
+                            f"which is illegal for XML names.",
+                    node_tag=tag,
+                    def_name=value if attr in ("DEF", "USE") else "",
+                ))
+    return diagnostics
+
+
 def _check_missing_viewpoint(scene: etree._Element) -> list[Diagnostic]:
     if list(scene.iter("Viewpoint")):
         return []
@@ -579,6 +642,7 @@ _ALL_CHECKS = [
     _check_shape_completeness,
     _check_empty_groups,
     _check_route_validity,
+    _check_naming_conventions,
     _check_interpolator_keys,
     _check_missing_viewpoint,
 ]
