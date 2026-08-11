@@ -283,3 +283,94 @@ def test_clean_names_not_flagged():
         '<Appearance><Material/></Appearance><Box/></Shape></Transform>'
         '<Viewpoint description="v"/>'))
     assert "naming-convention" not in report
+
+
+# ---- IndexedFaceSet coordIndex health (ISO/IEC 19775-1 13.3.6) ----
+# The XSD types coordIndex as an int array and Coordinate.point as floats,
+# and checks no relation between them: both fault fixtures below pass
+# validate_xml (measured, valid: True). A bad index renders corrupt or blank
+# depending on the player, so this Level-4 check is the only guard.
+
+def test_coordindex_out_of_range_error():
+    report = validate_semantic(_wrap(
+        "<Shape><IndexedFaceSet coordIndex='0 1 3 -1'>"
+        "<Coordinate point='0 0 0 1 0 0 0 1 0'/></IndexedFaceSet></Shape>"))
+    assert "coordindex-out-of-range" in report
+    assert "3 point" in report          # message quotes the real counts
+
+
+def test_coordindex_in_range_clean():
+    report = validate_semantic(_wrap(
+        "<Shape><IndexedFaceSet coordIndex='0 1 2 -1'>"
+        "<Coordinate point='0 0 0 1 0 0 0 1 0'/></IndexedFaceSet></Shape>"))
+    assert "coordindex-" not in report
+
+
+def test_coordindex_trailing_separator_optional():
+    # The spec: "The last face may be (but does not have to be) followed by
+    # a -1 index." A separator-free all-distinct list is a legal single face.
+    report = validate_semantic(_wrap(
+        "<Shape><IndexedFaceSet coordIndex='0 1 2'>"
+        "<Coordinate point='0 0 0 1 0 0 0 1 0'/></IndexedFaceSet></Shape>"))
+    assert "coordindex-" not in report
+
+
+def test_coordindex_negative_index_error():
+    report = validate_semantic(_wrap(
+        "<Shape><IndexedFaceSet coordIndex='0 -2 2 -1'>"
+        "<Coordinate point='0 0 0 1 0 0 0 1 0'/></IndexedFaceSet></Shape>"))
+    assert "coordindex-out-of-range" in report
+
+
+def test_coordindex_empty_warned():
+    report = validate_semantic(_wrap(
+        "<Shape><IndexedFaceSet>"
+        "<Coordinate point='0 0 0 1 0 0 0 1 0'/></IndexedFaceSet></Shape>"))
+    assert "coordindex-empty" in report
+
+
+def test_coordindex_no_coordinate_node_error():
+    report = validate_semantic(_wrap(
+        "<Shape><IndexedFaceSet coordIndex='0 1 2 -1'/></Shape>"))
+    assert "coordindex-out-of-range" in report
+
+
+def test_coordindex_use_coordinate_resolved():
+    # The out-of-range defect must be caught through a <Coordinate USE=.../>.
+    report = validate_semantic(_wrap(
+        "<Shape><IndexedFaceSet coordIndex='0 1 2 -1'>"
+        "<Coordinate DEF='Pts' point='0 0 0 1 0 0 0 1 0'/></IndexedFaceSet></Shape>"
+        "<Shape><IndexedFaceSet coordIndex='0 1 5 -1'>"
+        "<Coordinate USE='Pts'/></IndexedFaceSet></Shape>"))
+    assert "coordindex-out-of-range" in report
+
+
+def test_coordindex_missing_separator_warned():
+    # Repeated indices with no -1 anywhere mean concatenated faces: a single
+    # valid polygon never revisits a vertex.
+    report = validate_semantic(_wrap(
+        "<Shape><IndexedFaceSet coordIndex='0 1 2 0 2 3'>"
+        "<Coordinate point='0 0 0 1 0 0 0 1 0 1 1 0'/></IndexedFaceSet></Shape>"))
+    assert "coordindex-missing-separator" in report
+
+
+def test_coordindex_degenerate_face_error():
+    report = validate_semantic(_wrap(
+        "<Shape><IndexedFaceSet coordIndex='0 1 1 -1'>"
+        "<Coordinate point='0 0 0 1 0 0 0 1 0'/></IndexedFaceSet></Shape>"))
+    assert "coordindex-degenerate-face" in report
+
+    report2 = validate_semantic(_wrap(
+        "<Shape><IndexedFaceSet coordIndex='0 1 -1'>"
+        "<Coordinate point='0 0 0 1 0 0 0 1 0'/></IndexedFaceSet></Shape>"))
+    assert "coordindex-degenerate-face" in report2
+
+
+def test_coordindex_use_ifs_skipped():
+    # A USE'd IndexedFaceSet reuses the DEF'd node wholesale; only the DEF
+    # site is checked, and a healthy DEF produces no coordindex diagnostics.
+    report = validate_semantic(_wrap(
+        "<Shape><IndexedFaceSet DEF='Mesh' coordIndex='0 1 2 -1'>"
+        "<Coordinate point='0 0 0 1 0 0 0 1 0'/></IndexedFaceSet></Shape>"
+        "<Shape><IndexedFaceSet USE='Mesh'/></Shape>"))
+    assert "coordindex-" not in report
