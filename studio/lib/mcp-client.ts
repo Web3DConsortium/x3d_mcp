@@ -15,6 +15,15 @@ type ToolCallResult = {
   isError?: boolean;
 };
 
+export type ValidationResult = {
+  schema: { valid: boolean; errors: string[] };
+  semantic: {
+    errors: string[];
+    warnings: string[];
+    infoCount: number;
+  };
+};
+
 export type GeometryArguments = {
   shape: "box" | "sphere" | "cone" | "cylinder";
   color: [number, number, number];
@@ -93,26 +102,33 @@ async function mcpPost<T>(
   };
 }
 
-function extractX3d(result: ToolCallResult): string {
+function extractToolText(result: ToolCallResult, tool: string): string {
   const text = result.content?.find(
     (item): item is McpTextContent => item.type === "text" && "text" in item,
   )?.text;
 
-  if (!text) throw new Error("create_geometry returned no X3D text content.");
+  if (!text) throw new Error(`${tool} returned no text content.`);
   if (result.isError) throw new Error(text);
+  return text;
+}
+
+function extractX3d(result: ToolCallResult): string {
+  const text = extractToolText(result, "create_geometry");
 
   const document = text.match(/(?:<\?xml[\s\S]*?)?<X3D\b[\s\S]*?<\/X3D>/i)?.[0];
   if (!document) throw new Error("create_geometry returned text, but no X3D document was found.");
   return document;
 }
 
-export async function createGeometryViaMcp(
-  endpoint: string,
-  args: GeometryArguments,
-): Promise<string> {
+type McpSession = {
+  callTool: (name: string, args: Record<string, unknown>) => Promise<ToolCallResult>;
+};
+
+async function withMcpSession<T>(endpoint: string, action: (session: McpSession) => Promise<T>): Promise<T> {
   const protocolVersion = process.env.MCP_PROTOCOL_VERSION || DEFAULT_PROTOCOL_VERSION;
   let activeProtocolVersion = protocolVersion;
   let sessionId: string | undefined;
+  let nextId = 2;
 
   try {
     const initialized = await mcpPost<{
@@ -147,20 +163,23 @@ export async function createGeometryViaMcp(
       sessionId,
     );
 
-    const called = await mcpPost<ToolCallResult>(
-      endpoint,
-      {
-        jsonrpc: "2.0",
-        id: 2,
-        method: "tools/call",
-        params: { name: "create_geometry", arguments: { ...args, encoding: "xml" } },
+    return await action({
+      async callTool(name, args) {
+        const called = await mcpPost<ToolCallResult>(
+          endpoint,
+          {
+            jsonrpc: "2.0",
+            id: nextId++,
+            method: "tools/call",
+            params: { name, arguments: args },
+          },
+          negotiatedVersion,
+          sessionId,
+        );
+        if (!called.message?.result) throw new Error(`${name} returned no result.`);
+        return called.message.result;
       },
-      negotiatedVersion,
-      sessionId,
-    );
-
-    if (!called.message?.result) throw new Error("The MCP tool returned no result.");
-    return extractX3d(called.message.result);
+    });
   } finally {
     if (sessionId) {
       const headers = new Headers({
@@ -171,4 +190,56 @@ export async function createGeometryViaMcp(
       void fetch(endpoint, { method: "DELETE", headers }).catch(() => undefined);
     }
   }
+}
+
+export async function createGeometryViaMcp(endpoint: string, args: GeometryArguments): Promise<string> {
+  return withMcpSession(endpoint, async ({ callTool }) =>
+    extractX3d(await callTool("create_geometry", { ...args, encoding: "xml" })),
+  );
+}
+
+function parseSchema(result: ToolCallResult): ValidationResult["schema"] {
+  const parsed: unknown = JSON.parse(extractToolText(result, "validate_x3d"));
+  if (!parsed || typeof parsed !== "object") throw new Error("validate_x3d returned an invalid report.");
+  const report = parsed as Record<string, unknown>;
+  if (typeof report.valid !== "boolean" || !Array.isArray(report.errors) ||
+      !report.errors.every((error) => typeof error === "string")) {
+    throw new Error("validate_x3d returned an invalid report.");
+  }
+  return { valid: report.valid, errors: report.errors as string[] };
+}
+
+function parseSemantic(result: ToolCallResult): ValidationResult["semantic"] {
+  const text = extractToolText(result, "validate_semantic");
+  if (text.startsWith("# Semantic Check: All Clear")) {
+    return { errors: [], warnings: [], infoCount: 0 };
+  }
+  if (text.startsWith("# Semantic Check: Parse Error") ||
+      text.startsWith("# Semantic Check: No Scene") ||
+      text.startsWith("# Semantic Check: Input Error")) {
+    return { errors: [text.split("\n\n").slice(1).join("\n\n").trim() || text], warnings: [], infoCount: 0 };
+  }
+  const counts = text.match(/Found (\d+) error\(s\), (\d+) warning\(s\), (\d+) info\(s\)\./);
+  if (!text.startsWith("# Semantic Check Report") || !counts) {
+    throw new Error("validate_semantic returned an unrecognized report.");
+  }
+  const section = (name: string) =>
+    text.match(new RegExp(`## ${name}\\n\\n([\\s\\S]*?)(?=\\n## |$)`))?.[1]
+      .split("\n")
+      .filter((line) => line.startsWith("- "))
+      .map((line) => line.replace(/^- \*\*\[[^\]]+\]\*\* /, "")) || [];
+  const errors = section("Errors");
+  const warnings = section("Warnings");
+  if (errors.length !== Number(counts[1]) || warnings.length !== Number(counts[2])) {
+    throw new Error("validate_semantic returned an incomplete report.");
+  }
+  return { errors, warnings, infoCount: Number(counts[3]) };
+}
+
+export async function validateSceneViaMcp(endpoint: string, content: string): Promise<ValidationResult> {
+  return withMcpSession(endpoint, async ({ callTool }) => {
+    const schema = parseSchema(await callTool("validate_x3d", { content, encoding: "xml" }));
+    const semantic = parseSemantic(await callTool("validate_semantic", { content }));
+    return { schema, semantic };
+  });
 }

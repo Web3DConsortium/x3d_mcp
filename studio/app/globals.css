@@ -112,6 +112,8 @@ button { color: inherit; }
   background: var(--green);
   box-shadow: 0 0 0 4px rgba(69, 214, 155, 0.09), 0 0 14px rgba(69, 214, 155, 0.45);
 }
+.server-status.checking .status-dot { background: var(--orange); box-shadow: 0 0 0 4px rgba(255,159,90,.09); }
+.server-status.unavailable .status-dot { background: var(--danger); box-shadow: 0 0 0 4px rgba(255,113,129,.09); }
 
 .workspace {
   height: calc(100dvh - 68px);
@@ -462,6 +464,8 @@ fieldset legend { width: 100%; margin-bottom: 7px; }
 .status-row strong { color: #c8d2df; font-size: 9.5px; }
 .status-row small { overflow: hidden; color: #6f7c90; font-size: 8px; white-space: nowrap; text-overflow: ellipsis; }
 .status-pending .status-icon { color: #69768a; background: rgba(255,255,255,.04); }
+.status-warning .status-icon { color: var(--orange); background: rgba(255,159,90,.09); }
+.status-error .status-icon { color: var(--danger); background: rgba(255,113,129,.09); }
 
 .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .metric-grid div { padding: 10px; display: flex; flex-direction: column; gap: 2px; border: 1px solid var(--line); border-radius: 8px; background: rgba(5,11,20,.28); }
@@ -476,8 +480,20 @@ fieldset legend { width: 100%; margin-bottom: 7px; }
 .pipeline-step small { color: #657287; font-size: 7.5px; }
 .pipeline-step.future > span { color: #67758a; background: #182337; }
 .pipeline-step.future strong { color: #7c899d; }
+.pipeline-step.checking > span { color: #261506; background: var(--orange); }
+.pipeline-step.issue > span { color: #2a0910; background: var(--danger); }
+.pipeline-step.warning > span { color: #261506; background: var(--orange); }
 .pipeline-line { width: 1px; height: 10px; margin: 2px 0 2px 10px; background: #263146; }
 .pipeline-line.active { background: #3ba67c; }
+
+.retry-button { padding: 3px 6px; border: 1px solid var(--line-strong); border-radius: 5px; background: rgba(255,255,255,.03); color: #91a1b8; cursor: pointer; font-size: 8px; }
+.retry-button:disabled { opacity: .45; cursor: wait; }
+.validation-notice { padding: 10px; border: 1px solid var(--line); border-radius: 8px; color: #9cacbf; background: rgba(5,11,20,.3); font-size: 9px; line-height: 1.5; }
+.validation-notice.issue { border-color: rgba(255,113,129,.24); color: #ff9da8; }
+.validation-findings { margin-top: 8px; display: grid; gap: 6px; }
+.validation-findings p { margin: 0; padding: 8px 9px; border-radius: 6px; font-size: 8.5px; line-height: 1.5; overflow-wrap: anywhere; }
+.validation-findings .error { color: #ff9da8; background: rgba(255,113,129,.08); }
+.validation-findings .warning { color: #f2bd87; background: rgba(255,159,90,.08); }
 
 .standard-card {
   margin-top: 16px;

@@ -8,6 +8,7 @@ import {
   unparsedSceneFacts,
 } from "@/lib/scene-inspector";
 import { X3DViewer } from "@/components/X3DViewer";
+import type { ValidationResult } from "@/lib/mcp-client";
 import {
   AlertIcon,
   ChatIcon,
@@ -30,6 +31,10 @@ type SceneOrigin = {
   durationMs?: number;
   kind: "sample" | "mcp";
 };
+type ValidationState =
+  | { status: "checking" }
+  | { status: "ready"; result: ValidationResult }
+  | { status: "unavailable"; error: string };
 
 const SHAPES: Array<{ name: ShapeName; label: string }> = [
   { name: "box", label: "Box" },
@@ -79,14 +84,16 @@ function StatusRow({
   detail,
   valid,
   pending,
+  warning,
 }: {
   label: string;
   detail: string;
   valid?: boolean;
   pending?: boolean;
+  warning?: boolean;
 }) {
   return (
-    <div className={`status-row ${pending ? "status-pending" : ""}`}>
+    <div className={`status-row ${pending ? "status-pending" : warning ? "status-warning" : valid ? "" : "status-error"}`}>
       <span className="status-icon">
         {valid ? <CheckIcon /> : pending ? <span>···</span> : <AlertIcon />}
       </span>
@@ -112,6 +119,8 @@ export function Studio() {
   const [error, setError] = useState<string>();
   const [inspectorTab, setInspectorTab] = useState<"overview" | "source">("overview");
   const [copied, setCopied] = useState(false);
+  const [validation, setValidation] = useState<ValidationState>({ status: "checking" });
+  const [validationRevision, setValidationRevision] = useState(0);
 
   const [facts, setFacts] = useState(() => unparsedSceneFacts(SAMPLE_SCENE));
   const selectedColor = COLORS[colorIndex];
@@ -119,6 +128,46 @@ export function Studio() {
   useEffect(() => {
     setFacts(inspectScene(scene));
   }, [scene]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setValidation({ status: "checking" });
+    async function validate() {
+      try {
+        const response = await fetch("/api/mcp/validate-scene", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: scene }),
+          signal: controller.signal,
+        });
+        const result = await response.json() as ValidationResult & { error?: string };
+        if (!response.ok) throw new Error(result.error || "The MCP validation request failed.");
+        if (!controller.signal.aborted) setValidation({ status: "ready", result });
+      } catch (caught) {
+        if (!controller.signal.aborted) {
+          setValidation({
+            status: "unavailable",
+            error: caught instanceof Error ? caught.message : "The MCP validation request failed.",
+          });
+        }
+      }
+    }
+    void validate();
+    return () => controller.abort();
+  }, [scene, validationRevision]);
+
+  const validationHasIssues = validation.status === "ready" &&
+    (!validation.result.schema.valid || validation.result.semantic.errors.length > 0 ||
+      validation.result.semantic.warnings.length > 0);
+  const validationHasErrors = validation.status === "ready" &&
+    (!validation.result.schema.valid || validation.result.semantic.errors.length > 0);
+  const validationSummary = validation.status === "checking"
+    ? "Running XSD + semantic checks"
+    : validation.status === "unavailable"
+      ? "MCP check unavailable"
+      : validationHasIssues
+        ? "Review findings below"
+        : "XSD + semantic checks passed";
 
   async function createGeometry() {
     setIsGenerating(true);
@@ -191,9 +240,9 @@ export function Studio() {
           <span className="competition-pill"><SparkIcon /> AI × Web3D 2026</span>
           <span className="topbar-copy">Open standards. Intelligent creation.</span>
         </div>
-        <div className="server-status" title="The Studio bridge is configured for an MCP backend">
+        <div className={`server-status ${validation.status}`} title="Status of the latest MCP validation request">
           <span className="status-dot" />
-          MCP bridge ready
+          {validation.status === "ready" ? "MCP connected" : validation.status === "checking" ? "Checking MCP…" : "MCP unavailable"}
         </div>
       </header>
 
@@ -213,14 +262,11 @@ export function Studio() {
               <p>Turn ideas into standards-compliant X3D scenes through inspectable tools.</p>
             </div>
 
-            <div className="message user-message">
-              Create a polished scene I can inspect, validate, and publish to the web.
-            </div>
             <div className="message assistant-message">
               <span className="assistant-avatar"><CubeIcon /></span>
               <div>
-                <strong>Ready to build</strong>
-                <p>This milestone calls <code>create_geometry</code> directly. Conversational orchestration comes next.</p>
+                <strong>Guided creation mode</strong>
+                <p>Choose a shape below to call <code>create_geometry</code>. Natural-language chat is not enabled in this demo.</p>
               </div>
             </div>
 
@@ -379,14 +425,37 @@ export function Studio() {
                 <div><strong>{formatBytes(facts.bytes)}</strong><span>Document</span></div>
               </div>
 
-              <div className="section-label"><span>Validation pipeline</span><small>Architecture hooks</small></div>
+              <div className="section-label"><span>Validation pipeline</span><small>Live MCP tools</small></div>
               <div className="pipeline-card">
                 <div className="pipeline-step complete"><span>1</span><p><strong>Generate</strong><small>{origin.kind === "mcp" ? "MCP tool response" : "Sample document"}</small></p></div>
                 <div className="pipeline-line active" />
                 <div className="pipeline-step complete"><span>2</span><p><strong>Inspect</strong><small>Browser scene analysis</small></p></div>
-                <div className="pipeline-line" />
-                <div className="pipeline-step future"><span>3</span><p><strong>Validate</strong><small>XSD + semantic MCP tools</small></p></div>
+                <div className={`pipeline-line ${validation.status === "ready" ? "active" : ""}`} />
+                <div className={`pipeline-step ${validation.status === "checking" ? "checking" : validation.status === "unavailable" || validationHasErrors ? "issue" : validationHasIssues ? "warning" : "complete"}`}>
+                  <span>3</span><p><strong>Validate</strong><small>{validationSummary}</small></p>
+                </div>
               </div>
+
+              <div className="section-label">
+                <span>MCP validation</span>
+                <button className="retry-button" type="button" onClick={() => setValidationRevision((value) => value + 1)} disabled={validation.status === "checking"}>Retry</button>
+              </div>
+              {validation.status === "checking" ? (
+                <div className="validation-notice" role="status">Checking X3D 4.1 schema and scene semantics… Render may need time to wake up.</div>
+              ) : validation.status === "unavailable" ? (
+                <div className="validation-notice issue" role="alert">{validation.error}</div>
+              ) : (
+                <div className="status-list">
+                  <StatusRow label="X3D 4.1 schema" detail={validation.result.schema.valid ? "No XSD errors" : `${validation.result.schema.errors.length} XSD error(s)`} valid={validation.result.schema.valid} />
+                  <StatusRow label="Scene semantics" detail={`${validation.result.semantic.errors.length} errors · ${validation.result.semantic.warnings.length} warnings · ${validation.result.semantic.infoCount} notes`} valid={validation.result.semantic.errors.length === 0 && validation.result.semantic.warnings.length === 0} warning={validation.result.semantic.errors.length === 0 && validation.result.semantic.warnings.length > 0} />
+                </div>
+              )}
+              {validation.status === "ready" && (
+                <div className="validation-findings">
+                  {[...validation.result.schema.errors, ...validation.result.semantic.errors].map((issue, index) => <p className="error" key={`error-${index}`}>{issue}</p>)}
+                  {validation.result.semantic.warnings.map((issue, index) => <p className="warning" key={`warning-${index}`}>{issue}</p>)}
+                </div>
+              )}
 
               <div className="standard-card">
                 <div className="standard-icon"><CubeIcon /></div>

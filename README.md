@@ -58,7 +58,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open `http://localhost:3000`. The included sample scene renders without the backend; **Create with MCP** establishes a Streamable HTTP session, invokes `create_geometry`, and replaces the preview with the returned X3D. See [`studio/README.md`](studio/README.md) for configuration and integration details.
+Open `http://localhost:3000`. The included sample scene renders without the backend; **Create with MCP** establishes a Streamable HTTP session, invokes `create_geometry`, and replaces the preview with the returned X3D. The Inspector then runs `validate_x3d` and `validate_semantic` against the current scene through the same server-side bridge. The Studio's left panel is guided tool control, not embedded LLM chat. See [`studio/README.md`](studio/README.md) for configuration and integration details.
 
 ### MCP Inspector
 
