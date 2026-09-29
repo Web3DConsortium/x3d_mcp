@@ -35,6 +35,11 @@ Existing x3d_mcp Python server
 
 `MCP_SERVER_URL` is server-only, so browser clients never receive backend session IDs or need direct CORS access. The local inspector intentionally labels its current checks as local XML/scene checks; `validate_x3d` and `validate_semantic` are represented as the next MCP pipeline hook rather than simulated results.
 
+For Vercel, set `MCP_SERVER_URL` for both Preview and Production to the public
+Render service URL. A bare service URL is normalized to `/mcp`; any other path is
+rejected with a clear configuration error. `MCP_REQUEST_TIMEOUT_MS` defaults to
+60 seconds so a sleeping Render free instance has time to cold-start.
+
 ## Next integration points
 
 - Add `validate_x3d` and `validate_semantic` calls after generation.

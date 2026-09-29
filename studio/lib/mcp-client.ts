@@ -1,4 +1,5 @@
 const DEFAULT_PROTOCOL_VERSION = "2025-11-25";
+const DEFAULT_REQUEST_TIMEOUT_MS = 60_000;
 
 type JsonRpcResponse<T> = {
   jsonrpc: "2.0";
@@ -45,7 +46,10 @@ async function readResponse<T>(response: Response): Promise<JsonRpcResponse<T> |
 
   const body = await response.text();
   if (!response.ok) {
-    throw new Error(body || `MCP request failed with HTTP ${response.status}.`);
+    const detail = body.trim().slice(0, 500);
+    throw new Error(
+      `MCP server returned HTTP ${response.status}${detail ? `: ${detail}` : "."}`,
+    );
   }
   if (!body.trim()) return undefined;
 
@@ -64,6 +68,10 @@ async function mcpPost<T>(
   protocolVersion: string,
   sessionId?: string,
 ): Promise<{ message?: JsonRpcResponse<T>; sessionId?: string }> {
+  const configuredTimeout = Number(process.env.MCP_REQUEST_TIMEOUT_MS);
+  const timeoutMs = Number.isFinite(configuredTimeout) && configuredTimeout > 0
+    ? configuredTimeout
+    : DEFAULT_REQUEST_TIMEOUT_MS;
   const headers = new Headers({
     Accept: "application/json, text/event-stream",
     "Content-Type": "application/json",
@@ -76,7 +84,7 @@ async function mcpPost<T>(
     headers,
     body: JSON.stringify(message),
     cache: "no-store",
-    signal: AbortSignal.timeout(15_000),
+    signal: AbortSignal.timeout(timeoutMs),
   });
 
   return {
@@ -103,6 +111,7 @@ export async function createGeometryViaMcp(
   args: GeometryArguments,
 ): Promise<string> {
   const protocolVersion = process.env.MCP_PROTOCOL_VERSION || DEFAULT_PROTOCOL_VERSION;
+  let activeProtocolVersion = protocolVersion;
   let sessionId: string | undefined;
 
   try {
@@ -130,6 +139,7 @@ export async function createGeometryViaMcp(
     }
 
     const negotiatedVersion = initialized.message.result.protocolVersion || protocolVersion;
+    activeProtocolVersion = negotiatedVersion;
     await mcpPost(
       endpoint,
       { jsonrpc: "2.0", method: "notifications/initialized" },
@@ -155,7 +165,7 @@ export async function createGeometryViaMcp(
     if (sessionId) {
       const headers = new Headers({
         Accept: "application/json, text/event-stream",
-        "MCP-Protocol-Version": protocolVersion,
+        "MCP-Protocol-Version": activeProtocolVersion,
         "Mcp-Session-Id": sessionId,
       });
       void fetch(endpoint, { method: "DELETE", headers }).catch(() => undefined);

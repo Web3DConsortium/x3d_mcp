@@ -6,8 +6,40 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const SHAPES = new Set(["box", "sphere", "cone", "cylinder"]);
+
+function mcpEndpoint(): string {
+  const configured = process.env.MCP_SERVER_URL?.trim();
+
+  if (!configured) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "MCP_SERVER_URL is not configured for this deployment. Add the Render service URL in Vercel and redeploy.",
+      );
+    }
+    return "http://127.0.0.1:8000/mcp";
+  }
+
+  let endpoint: URL;
+  try {
+    endpoint = new URL(configured);
+  } catch {
+    throw new Error("MCP_SERVER_URL must be a valid absolute URL.");
+  }
+
+  const path = endpoint.pathname.replace(/\/+$/, "");
+  if (!path) {
+    endpoint.pathname = "/mcp";
+  } else if (path !== "/mcp") {
+    throw new Error("MCP_SERVER_URL must point to the backend's /mcp endpoint.");
+  } else {
+    endpoint.pathname = path;
+  }
+
+  return endpoint.toString();
+}
 
 function finiteNumbers(value: unknown, length?: number): value is number[] {
   return (
@@ -43,7 +75,7 @@ export async function POST(request: Request) {
 
   try {
     const args = readArguments(await request.json());
-    const endpoint = process.env.MCP_SERVER_URL || "http://127.0.0.1:8000/mcp";
+    const endpoint = mcpEndpoint();
     const x3d = await createGeometryViaMcp(endpoint, args);
 
     return NextResponse.json({
@@ -53,18 +85,31 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     const detail = error instanceof Error ? error.message : "Unknown MCP error";
+    const normalizedDetail = detail.toLowerCase();
+    const timedOut =
+      normalizedDetail.includes("timeout") ||
+      normalizedDetail.includes("timed out") ||
+      normalizedDetail.includes("aborted");
     const connectionFailure =
-      detail.includes("fetch failed") ||
-      detail.includes("ECONNREFUSED") ||
-      detail.includes("aborted");
+      timedOut ||
+      normalizedDetail.includes("fetch failed") ||
+      normalizedDetail.includes("econnrefused");
+    const configurationFailure = normalizedDetail.includes("mcp_server_url");
+
+    console.error("[create-geometry] MCP request failed", {
+      error: detail,
+      configured: Boolean(process.env.MCP_SERVER_URL),
+    });
 
     return NextResponse.json(
       {
-        error: connectionFailure
-          ? "The MCP backend is not reachable. Start x3d_mcp in Streamable HTTP mode and try again."
-          : detail,
+        error: timedOut
+          ? "The MCP backend took too long to wake up. Render free services can cold-start; wait a moment and try again."
+          : connectionFailure
+            ? "The MCP backend is not reachable. Confirm the Render service is running in Streamable HTTP mode."
+            : detail,
       },
-      { status: connectionFailure ? 503 : 502 },
+      { status: timedOut ? 504 : connectionFailure || configurationFailure ? 503 : 502 },
     );
   }
 }

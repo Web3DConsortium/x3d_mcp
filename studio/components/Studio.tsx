@@ -1,8 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { SAMPLE_SCENE } from "@/lib/sample-scene";
-import { formatBytes, inspectScene } from "@/lib/scene-inspector";
+import {
+  formatBytes,
+  inspectScene,
+  unparsedSceneFacts,
+} from "@/lib/scene-inspector";
 import { X3DViewer } from "@/components/X3DViewer";
 import {
   AlertIcon,
@@ -109,8 +113,12 @@ export function Studio() {
   const [inspectorTab, setInspectorTab] = useState<"overview" | "source">("overview");
   const [copied, setCopied] = useState(false);
 
-  const facts = useMemo(() => inspectScene(scene), [scene]);
+  const [facts, setFacts] = useState(() => unparsedSceneFacts(SAMPLE_SCENE));
   const selectedColor = COLORS[colorIndex];
+
+  useEffect(() => {
+    setFacts(inspectScene(scene));
+  }, [scene]);
 
   async function createGeometry() {
     setIsGenerating(true);

@@ -11,8 +11,8 @@ export type SceneFacts = {
   error?: string;
 };
 
-export function inspectScene(source: string): SceneFacts {
-  const base = {
+export function unparsedSceneFacts(source: string): SceneFacts {
+  return {
     wellFormed: false,
     hasX3dRoot: false,
     hasScene: false,
@@ -23,6 +23,10 @@ export function inspectScene(source: string): SceneFacts {
     namedNodes: 0,
     bytes: new TextEncoder().encode(source).length,
   };
+}
+
+export function inspectScene(source: string): SceneFacts {
+  const base = unparsedSceneFacts(source);
 
   if (typeof DOMParser === "undefined") return base;
 
