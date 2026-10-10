@@ -45,6 +45,21 @@ MCP_TRANSPORT=streamable-http PORT=8000 uv run python src/server.py
 
 The MCP endpoint is `/mcp`; `/` returns a small server info card and `/pulse` is a dependency-free health check for hosting platforms. Two safeguards apply under HTTP: each connected session gets its own granular scene state (concurrent clients cannot see or mutate each other's scenes), and file-path tool inputs are disabled (inline content only) so remote callers cannot read files from the server's filesystem. The production `Dockerfile` runs this mode by default.
 
+### x3d_mcp Studio
+
+The [`studio/`](studio/) directory contains a competition-facing Next.js UI with a guided creation panel, live X_ITE preview, and scene inspector. It remains a separate client of this MCP server rather than coupling browser concerns to the Python backend.
+
+With the Streamable HTTP server running on port 8000, start Studio in a second terminal:
+
+```bash
+cd studio
+npm install
+cp .env.example .env.local
+npm run dev
+```
+
+Open `http://localhost:3000`. The included sample scene renders without the backend; **Create with MCP** establishes a Streamable HTTP session, invokes `create_geometry`, and replaces the preview with the returned X3D. The Inspector then runs `validate_x3d` and `validate_semantic` against the current scene through the same server-side bridge. The Studio's left panel is guided tool control, not embedded LLM chat. See [`studio/README.md`](studio/README.md) for configuration and integration details.
+
 ### MCP Inspector
 
 Test the server interactively using the MCP Inspector (bundled with the `mcp[cli]` dependency):

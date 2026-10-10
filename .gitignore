@@ -1,6 +1,10 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+studio/node_modules/
+studio/.next/
+studio/.env.local
+studio/*.tsbuildinfo
 *.egg-info/
 dist/
 build/
