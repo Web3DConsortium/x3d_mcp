@@ -69,8 +69,12 @@ def level3(xml: str) -> bool:
 
 
 def level4(xml: str) -> bool:
+    # A fault counts as caught only if the report carries an actual Errors or
+    # Warnings section. Substring-matching "error" was vacuously True for every
+    # row: the summary line "Found 0 error(s), ..." contains "error", and the
+    # fault template has no Viewpoint so no report is ever All-Clear.
     report = validate_semantic(xml)
-    return "error" in report.lower()
+    return ("## Errors" in report) or ("## Warnings" in report)
 
 
 CONSTRUCTION_FAULTS = [
@@ -115,6 +119,12 @@ XML_FAULTS = [
      "    <TimeSensor DEF='T'/>\n"
      "    <ROUTE fromNode='T' fromField='fraction_changed' "
      "toNode='Nowhere' toField='set_fraction'/>"),
+    ("coordIndex out of range (index 3, 3 points)",
+     "    <Shape><IndexedFaceSet coordIndex='0 1 3 -1'>"
+     "<Coordinate point='0 0 0 1 0 0 0 1 0'/></IndexedFaceSet></Shape>"),
+    ("coordIndex degenerate face (2 distinct vertices)",
+     "    <Shape><IndexedFaceSet coordIndex='0 1 1 -1'>"
+     "<Coordinate point='0 0 0 1 0 0 0 1 0'/></IndexedFaceSet></Shape>"),
 ]
 
 

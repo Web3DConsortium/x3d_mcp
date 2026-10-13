@@ -623,6 +623,186 @@ def _check_naming_conventions(scene: etree._Element) -> list[Diagnostic]:
     return diagnostics
 
 
+_IFS_SPEC_URL = (
+    "https://www.web3d.org/specifications/X3Dv4/"
+    "ISO-IEC19775-1v4-IS/Part01/components/geometry3D.html#IndexedFaceSet"
+)
+
+# Concrete X3DCoordinateNode types an IndexedFaceSet can index into.
+_COORDINATE_TAGS = {"Coordinate", "CoordinateDouble", "GeoCoordinate"}
+
+
+def _check_coordindex_health(scene: etree._Element) -> list[Diagnostic]:
+    """Verify an IndexedFaceSet's coordIndex actually indexes its coordinates.
+
+    The XSD types coordIndex as MFInt32 and Coordinate.point as MFVec3f and
+    checks no relation between them (measured: both fault fixtures in the
+    ablation matrix pass XSD validation), so an out-of-range index renders
+    corrupt or blank depending on the player. ISO/IEC 19775-1:2023 (X3D 4.0)
+    13.3.6 states the rules this check enforces: "If the greatest index in the
+    coordIndex field is N, the X3DCoordinateNode node shall contain N+1
+    coordinates (indexed as 0 to N)"; each face shall have "at least three
+    non-coincident vertices"; and "An index of '-1' indicates that the current
+    face has ended and the next one begins. The last face may be (but does not
+    have to be) followed by a '-1' index."
+
+    Known limitations: degeneracy is checked at index level only -- repeated
+    indices within a face are provably coincident, but distinct indices at
+    coincident *positions* are not checked. Point-array arity (a point count
+    not divisible by 3) is likewise out of scope here.
+    """
+    diagnostics: list[Diagnostic] = []
+
+    coord_defs: dict[str, etree._Element] = {}
+    for el in scene.iter():
+        if _local_tag(el) in _COORDINATE_TAGS and el.get("DEF"):
+            coord_defs[el.get("DEF")] = el
+
+    for el in scene.iter("IndexedFaceSet"):
+        if el.get("USE"):
+            # A USE reference reuses the DEF'd node wholesale; the DEF site
+            # is where the fields live and get checked.
+            continue
+        def_name = el.get("DEF", "")
+        label = f" (DEF={el.get('DEF')!r})" if el.get("DEF") else ""
+
+        raw = el.get("coordIndex")
+        tokens = ([t for t in re.split(r"[\s,]+", raw.strip()) if t]
+                  if raw is not None else [])
+        if not tokens:
+            # Default coordIndex is [], so a missing attribute is the same
+            # defect as an explicitly empty one.
+            diagnostics.append(Diagnostic(
+                level="warning",
+                check="coordindex-empty",
+                message=f"IndexedFaceSet{label} has no coordIndex values, so it "
+                        f"defines no faces and renders nothing. Add coordIndex "
+                        f"entries (faces separated by -1) or remove the node.",
+                node_tag="IndexedFaceSet",
+                def_name=def_name,
+            ))
+            continue
+        try:
+            idx = [int(t) for t in tokens]
+        except ValueError:
+            # Non-integer tokens are a lexical fault the XSD (Level 3) catches.
+            continue
+
+        coord_el = None
+        for child in el:
+            if _local_tag(child) in _COORDINATE_TAGS:
+                coord_el = child
+                break
+        if coord_el is None:
+            diagnostics.append(Diagnostic(
+                level="error",
+                check="coordindex-out-of-range",
+                message=f"IndexedFaceSet{label} has {len(idx)} coordIndex "
+                        f"value(s) but no Coordinate node to index into. Add a "
+                        f"Coordinate/CoordinateDouble with at least "
+                        f"{max(idx) + 1} points.",
+                node_tag="IndexedFaceSet",
+                def_name=def_name,
+            ))
+            continue
+
+        range_known = True
+        use_name = coord_el.get("USE")
+        if use_name:
+            resolved = coord_defs.get(use_name)
+            if resolved is None:
+                # use-undefined-def already flags the broken reference.
+                range_known = False
+            else:
+                coord_el = resolved
+        coord_tag = _local_tag(coord_el)
+        point_attr = coord_el.get("point")
+        npoints = _count(point_attr) // 3 if point_attr else 0
+
+        # Sub-check: out-of-range indices (silent corruption in the player).
+        bad_neg = sorted(i for i in idx if i < -1)
+        if bad_neg:
+            diagnostics.append(Diagnostic(
+                level="error",
+                check="coordindex-out-of-range",
+                message=f"IndexedFaceSet{label}: coordIndex contains "
+                        f"{bad_neg[0]}; -1 is the only legal negative value; "
+                        f"it separates faces. Remove or correct the negative "
+                        f"index.",
+                node_tag="IndexedFaceSet",
+                def_name=def_name,
+            ))
+        if range_known:
+            mx = max(idx)
+            if mx >= npoints:
+                diagnostics.append(Diagnostic(
+                    level="error",
+                    check="coordindex-out-of-range",
+                    message=f"IndexedFaceSet{label}: coordIndex references "
+                            f"index {mx} but the {coord_tag} has only "
+                            f"{npoints} point(s) (valid indices "
+                            f"0..{npoints - 1}). ISO/IEC 19775-1 13.3.6 "
+                            f"requires N+1 coordinates when the greatest index "
+                            f"is N. See {_IFS_SPEC_URL}",
+                    node_tag="IndexedFaceSet",
+                    def_name=def_name,
+                ))
+
+        # Sub-check: missing -1 face separators. A separator-free all-distinct
+        # list is a legal single face (only the FINAL -1 is optional), but a
+        # single valid polygon never revisits a vertex, so repeated indices
+        # without any -1 mean concatenated faces.
+        if -1 not in idx and len(idx) != len(set(idx)):
+            diagnostics.append(Diagnostic(
+                level="warning",
+                check="coordindex-missing-separator",
+                message=f"IndexedFaceSet{label}: coordIndex repeats indices "
+                        f"but contains no -1 face separator, which reads as "
+                        f"one self-revisiting face. Separate each face with "
+                        f"-1 (the final -1 is optional).",
+                node_tag="IndexedFaceSet",
+                def_name=def_name,
+            ))
+
+        # Sub-check: degenerate faces (independent of range errors). Split on
+        # -1; a trailing -1 leaves an empty tail that is legal and ignored.
+        faces: list[list[int]] = []
+        cur: list[int] = []
+        for i in idx:
+            if i == -1:
+                faces.append(cur)
+                cur = []
+            else:
+                cur.append(i)
+        if cur:
+            faces.append(cur)
+        for k, face in enumerate(faces):
+            if not face:
+                diagnostics.append(Diagnostic(
+                    level="error",
+                    check="coordindex-degenerate-face",
+                    message=f"IndexedFaceSet{label}: empty face between "
+                            f"consecutive -1 separators -- remove the extra "
+                            f"separator.",
+                    node_tag="IndexedFaceSet",
+                    def_name=def_name,
+                ))
+            elif len(set(face)) < 3:
+                diagnostics.append(Diagnostic(
+                    level="error",
+                    check="coordindex-degenerate-face",
+                    message=f"IndexedFaceSet{label}: face {k} has only "
+                            f"{len(set(face))} distinct vertex index(es); "
+                            f"ISO/IEC 19775-1 13.3.6 requires each face to "
+                            f"have at least three non-coincident vertices. "
+                            f"Remove the face or fix its indices.",
+                    node_tag="IndexedFaceSet",
+                    def_name=def_name,
+                ))
+
+    return diagnostics
+
+
 def _check_missing_viewpoint(scene: etree._Element) -> list[Diagnostic]:
     if list(scene.iter("Viewpoint")):
         return []
@@ -644,6 +824,7 @@ _ALL_CHECKS = [
     _check_route_validity,
     _check_naming_conventions,
     _check_interpolator_keys,
+    _check_coordindex_health,
     _check_missing_viewpoint,
 ]
 
